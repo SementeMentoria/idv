@@ -1,0 +1,1323 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mapeamento do Problema — Semente</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;1,300;1,400&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<style>
+  :root {
+    --creme: #F5F0E8;
+    --bark: #3D2E1E;
+    --dourado: #B8925A;
+    --rose: #C9897A;
+    --verde: #5A7A5A;
+    --areia: #DDD0BC;
+    --areia-escura: #C8B89A;
+    --accent: #5A7A5A; /* verde como cor principal desta ferramenta */
+    --accent-light: rgba(90, 122, 90, 0.12);
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--creme);
+    color: var(--bark);
+    min-height: 100vh;
+  }
+
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
+    pointer-events: none;
+    z-index: 0;
+    opacity: 0.4;
+  }
+
+  /* ─── Layout ─── */
+  .page {
+    max-width: 720px;
+    margin: 0 auto;
+    padding: 52px 24px 100px;
+    position: relative;
+    z-index: 1;
+  }
+
+  /* Sections hidden by default */
+  .section { display: none; }
+  .section.active { display: block; }
+
+  /* ─── Header ─── */
+  .header {
+    text-align: center;
+    margin-bottom: 52px;
+    animation: fadeDown 0.7s ease both;
+  }
+
+  .eyebrow {
+    font-size: 10px;
+    font-weight: 500;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    color: var(--accent);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    margin-bottom: 18px;
+  }
+
+  .eyebrow::before, .eyebrow::after {
+    content: '';
+    width: 28px;
+    height: 1px;
+    background: var(--accent);
+    opacity: 0.5;
+  }
+
+  .header h1 {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: clamp(34px, 6vw, 50px);
+    font-weight: 300;
+    line-height: 1.1;
+    letter-spacing: -0.01em;
+  }
+
+  .header h1 em {
+    font-style: italic;
+    color: var(--accent);
+  }
+
+  .header-sub {
+    margin-top: 14px;
+    font-size: 13.5px;
+    font-weight: 300;
+    opacity: 0.6;
+    line-height: 1.65;
+    max-width: 420px;
+    margin-inline: auto;
+  }
+
+  /* ─── Progress strip ─── */
+  .progress-strip {
+    display: flex;
+    gap: 4px;
+    margin-bottom: 40px;
+    animation: fadeUp 0.5s 0.15s ease both;
+  }
+
+  .strip-seg {
+    flex: 1;
+    height: 3px;
+    background: var(--areia);
+    border-radius: 2px;
+    transition: background 0.4s;
+  }
+
+  .strip-seg.done { background: var(--accent); }
+  .strip-seg.active { background: var(--dourado); }
+
+  /* ─── Section titles ─── */
+  .sec-head {
+    margin-bottom: 28px;
+    animation: fadeUp 0.4s ease both;
+  }
+
+  .sec-num {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 11px;
+    letter-spacing: 0.16em;
+    color: var(--accent);
+    text-transform: uppercase;
+    margin-bottom: 6px;
+  }
+
+  .sec-title {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: clamp(24px, 4vw, 32px);
+    font-weight: 400;
+    line-height: 1.2;
+  }
+
+  .sec-title em { font-style: italic; color: var(--accent); }
+
+  .sec-desc {
+    margin-top: 10px;
+    font-size: 13.5px;
+    font-weight: 300;
+    opacity: 0.6;
+    line-height: 1.7;
+    max-width: 540px;
+  }
+
+  /* ─── Question card ─── */
+  .q-card {
+    background: white;
+    border: 1px solid var(--areia);
+    border-radius: 2px;
+    padding: 32px 36px 28px;
+    margin-bottom: 16px;
+    position: relative;
+    box-shadow: 0 1px 12px rgba(61,46,30,0.05);
+    animation: fadeUp 0.4s ease both;
+  }
+
+  .q-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 28px; right: 28px;
+    height: 2px;
+    background: linear-gradient(90deg, var(--accent), transparent);
+  }
+
+  .q-num {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 11px;
+    letter-spacing: 0.14em;
+    color: var(--accent);
+    opacity: 0.7;
+    margin-bottom: 8px;
+  }
+
+  .q-label {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 20px;
+    font-weight: 400;
+    line-height: 1.3;
+    margin-bottom: 18px;
+    color: var(--bark);
+  }
+
+  textarea, .input-field {
+    width: 100%;
+    background: var(--creme);
+    border: 1px solid var(--areia);
+    border-radius: 2px;
+    padding: 14px 16px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 14px;
+    font-weight: 300;
+    line-height: 1.75;
+    color: var(--bark);
+    outline: none;
+    transition: border-color 0.2s, box-shadow 0.2s;
+  }
+
+  textarea { resize: vertical; min-height: 100px; }
+
+  textarea::placeholder, .input-field::placeholder {
+    color: var(--bark);
+    opacity: 0.3;
+    font-style: italic;
+  }
+
+  textarea:focus, .input-field:focus {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px rgba(90,122,90,0.1);
+  }
+
+  .autosave {
+    font-size: 10px;
+    color: var(--verde);
+    opacity: 0;
+    text-align: right;
+    margin-top: 6px;
+    transition: opacity 0.3s;
+  }
+  .autosave.show { opacity: 1; }
+
+  /* ─── Reflect callout ─── */
+  .reflect-box {
+    border: 1px solid var(--accent);
+    border-radius: 2px;
+    padding: 20px 24px;
+    background: var(--accent-light);
+    margin: 28px 0;
+    display: flex;
+    gap: 14px;
+    align-items: flex-start;
+  }
+
+  .reflect-icon {
+    font-size: 18px;
+    line-height: 1;
+    flex-shrink: 0;
+    margin-top: 2px;
+  }
+
+  .reflect-text {
+    font-size: 13.5px;
+    font-weight: 400;
+    line-height: 1.7;
+    color: var(--bark);
+    opacity: 0.85;
+  }
+
+  .reflect-text strong {
+    font-weight: 500;
+    color: var(--accent);
+  }
+
+  /* ─── Três Problemas ─── */
+  .problem-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 16px;
+    margin-bottom: 16px;
+  }
+
+  .problem-card {
+    background: white;
+    border: 1px solid var(--areia);
+    border-radius: 2px;
+    padding: 28px 32px 24px;
+    position: relative;
+    box-shadow: 0 1px 12px rgba(61,46,30,0.04);
+    animation: fadeUp 0.4s ease both;
+  }
+
+  .problem-card.externo::before { background: linear-gradient(90deg, var(--accent), transparent); }
+  .problem-card.interno::before { background: linear-gradient(90deg, var(--rose), transparent); }
+  .problem-card.filosofico::before { background: linear-gradient(90deg, var(--dourado), transparent); }
+
+  .problem-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 24px; right: 24px;
+    height: 2px;
+  }
+
+  .problem-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 10px;
+    font-weight: 500;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    padding: 4px 10px;
+    border-radius: 20px;
+    margin-bottom: 14px;
+  }
+
+  .externo .problem-badge { background: var(--accent-light); color: var(--accent); }
+  .interno .problem-badge { background: rgba(201,137,122,0.12); color: var(--rose); }
+  .filosofico .problem-badge { background: rgba(184,146,90,0.12); color: var(--dourado); }
+
+  .problem-title {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 22px;
+    font-weight: 400;
+    margin-bottom: 8px;
+  }
+
+  .problem-desc {
+    font-size: 12.5px;
+    font-weight: 300;
+    opacity: 0.6;
+    line-height: 1.65;
+    margin-bottom: 18px;
+    padding-left: 12px;
+    border-left: 2px solid var(--areia);
+  }
+
+  .problem-example {
+    font-size: 11px;
+    font-style: italic;
+    opacity: 0.45;
+    margin-bottom: 16px;
+    letter-spacing: 0.02em;
+  }
+
+  /* ─── Checklist ─── */
+  .checklist {
+    background: white;
+    border: 1px solid var(--areia);
+    border-radius: 2px;
+    padding: 32px 36px;
+    margin-bottom: 16px;
+    box-shadow: 0 1px 12px rgba(61,46,30,0.04);
+  }
+
+  .check-title {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 20px;
+    font-weight: 400;
+    margin-bottom: 22px;
+    color: var(--bark);
+  }
+
+  .check-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 14px;
+    padding: 14px 0;
+    border-bottom: 1px solid var(--areia);
+    cursor: pointer;
+    transition: opacity 0.2s;
+  }
+
+  .check-item:last-child { border-bottom: none; padding-bottom: 0; }
+  .check-item:first-of-type { padding-top: 0; }
+
+  .check-box {
+    width: 22px;
+    height: 22px;
+    border: 1.5px solid var(--areia-escura);
+    border-radius: 2px;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+    margin-top: 1px;
+  }
+
+  .check-item.checked .check-box {
+    background: var(--accent);
+    border-color: var(--accent);
+  }
+
+  .check-icon {
+    opacity: 0;
+    transition: opacity 0.2s;
+    font-size: 12px;
+    color: white;
+  }
+
+  .check-item.checked .check-icon { opacity: 1; }
+
+  .check-text {
+    font-size: 13.5px;
+    font-weight: 300;
+    line-height: 1.6;
+    opacity: 0.75;
+    transition: opacity 0.2s;
+  }
+
+  .check-item.checked .check-text {
+    opacity: 1;
+    text-decoration: line-through;
+    text-decoration-color: var(--accent);
+    text-decoration-thickness: 1px;
+  }
+
+  .check-progress {
+    margin-top: 16px;
+    font-size: 11px;
+    font-weight: 500;
+    letter-spacing: 0.08em;
+    color: var(--accent);
+    opacity: 0.8;
+  }
+
+  /* ─── Frase final ─── */
+  .frase-card {
+    background: white;
+    border: 1px solid var(--areia);
+    border-radius: 2px;
+    padding: 36px 40px 32px;
+    position: relative;
+    box-shadow: 0 1px 12px rgba(61,46,30,0.04);
+    margin-bottom: 16px;
+  }
+
+  .frase-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 32px; right: 32px;
+    height: 2px;
+    background: linear-gradient(90deg, var(--dourado), var(--rose), transparent);
+  }
+
+  .frase-template {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: clamp(17px, 2.8vw, 21px);
+    font-weight: 300;
+    line-height: 2;
+    color: var(--bark);
+    margin: 20px 0 28px;
+  }
+
+  .frase-slot {
+    display: inline-block;
+    border-bottom: 1.5px solid var(--dourado);
+    min-width: 120px;
+    margin: 0 4px;
+    vertical-align: bottom;
+    position: relative;
+  }
+
+  .frase-input {
+    border: none;
+    border-radius: 0;
+    background: transparent;
+    font-family: 'Cormorant Garamond', serif;
+    font-size: inherit;
+    font-weight: 400;
+    font-style: italic;
+    color: var(--dourado);
+    padding: 0 4px 2px;
+    width: 100%;
+    min-width: 100px;
+    outline: none;
+    transition: background 0.2s;
+  }
+
+  .frase-input::placeholder {
+    color: var(--dourado);
+    opacity: 0.45;
+    font-style: italic;
+  }
+
+  .frase-input:focus {
+    background: rgba(184,146,90,0.07);
+  }
+
+  .frase-preview {
+    background: var(--creme);
+    border: 1px solid var(--areia);
+    border-radius: 2px;
+    padding: 20px 22px;
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 17px;
+    font-weight: 400;
+    line-height: 1.6;
+    color: var(--bark);
+    opacity: 0.9;
+    min-height: 60px;
+    margin-top: 8px;
+  }
+
+  .frase-preview em { color: var(--dourado); font-style: italic; }
+
+  .preview-label {
+    font-size: 10px;
+    font-weight: 500;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    opacity: 0.45;
+    margin-bottom: 8px;
+  }
+
+  .frase-warning {
+    font-size: 12px;
+    font-weight: 300;
+    opacity: 0.55;
+    line-height: 1.6;
+    margin-top: 14px;
+    padding-left: 12px;
+    border-left: 2px solid var(--areia);
+  }
+
+  /* ─── Nav ─── */
+  .nav {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 36px;
+    padding-top: 24px;
+    border-top: 1px solid var(--areia);
+  }
+
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 13px;
+    font-weight: 500;
+    letter-spacing: 0.06em;
+    padding: 12px 24px;
+    border-radius: 2px;
+    border: none;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+
+  .btn-ghost {
+    background: transparent;
+    color: var(--bark);
+    opacity: 0.45;
+    padding-left: 0;
+  }
+
+  .btn-ghost:hover { opacity: 1; }
+
+  .btn-primary {
+    background: var(--bark);
+    color: var(--creme);
+  }
+
+  .btn-primary:hover {
+    background: #2a1f14;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 16px rgba(61,46,30,0.2);
+  }
+
+  .btn-verde {
+    background: var(--accent);
+    color: white;
+  }
+
+  .btn-verde:hover {
+    background: #486448;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 16px rgba(90,122,90,0.3);
+  }
+
+  .btn-outline {
+    background: transparent;
+    border: 1px solid var(--areia-escura);
+    color: var(--bark);
+    opacity: 0.7;
+  }
+
+  .btn-outline:hover { opacity: 1; border-color: var(--bark); }
+
+  .arrow { transition: transform 0.2s; }
+  .btn-primary:hover .arr-r { transform: translateX(3px); }
+  .btn-ghost:hover .arr-l { transform: translateX(-3px); }
+
+  /* ─── Completion ─── */
+  .completion-wrap {
+    text-align: center;
+    padding: 52px 36px 44px;
+    background: white;
+    border: 1px solid var(--areia);
+    border-radius: 2px;
+    box-shadow: 0 1px 12px rgba(61,46,30,0.04);
+  }
+
+  .completion-wrap::before {
+    content: '';
+    display: block;
+    height: 2px;
+    background: linear-gradient(90deg, var(--accent), var(--dourado), var(--rose));
+    margin: -52px -36px 44px;
+    border-radius: 2px 2px 0 0;
+  }
+
+  .completion-icon {
+    width: 68px;
+    height: 68px;
+    margin: 0 auto 28px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--accent), var(--verde));
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 26px;
+  }
+
+  .completion-wrap h2 {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 34px;
+    font-weight: 300;
+    margin-bottom: 14px;
+  }
+
+  .completion-wrap h2 em { font-style: italic; color: var(--accent); }
+
+  .completion-wrap p {
+    font-size: 13.5px;
+    font-weight: 300;
+    line-height: 1.7;
+    opacity: 0.6;
+    max-width: 360px;
+    margin: 0 auto 36px;
+  }
+
+  .completion-actions {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .pdf-loading {
+    display: none;
+    align-items: center;
+    gap: 8px;
+    font-size: 12px;
+    color: var(--accent);
+  }
+
+  .pdf-loading.show { display: flex; }
+
+  .spinner {
+    width: 14px;
+    height: 14px;
+    border: 2px solid var(--areia);
+    border-top-color: var(--accent);
+    border-radius: 50%;
+    animation: spin 0.7s linear infinite;
+  }
+
+  /* ─── Animations ─── */
+  @keyframes fadeDown {
+    from { opacity: 0; transform: translateY(-16px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(16px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  .fade-in { animation: fadeUp 0.4s ease both; }
+
+  @media (max-width: 480px) {
+    .q-card, .problem-card, .checklist, .frase-card { padding: 24px 20px 20px; }
+    .frase-template { font-size: 16px; line-height: 2.2; }
+  }
+</style>
+</head>
+<body>
+
+<div class="page">
+
+  <!-- HEADER -->
+  <div class="header">
+    <div class="eyebrow">3º Encontro · Semente</div>
+    <h1>Mapeamento do<br><em>Problema</em></h1>
+    <p class="header-sub">Clareza sobre o que você resolve é o alicerce de toda comunicação e oferta poderosa.</p>
+  </div>
+
+  <!-- Progress strip (5 segments: 4 questions + 3 problems + checklist + frase + done) -->
+  <div class="progress-strip" id="progressStrip">
+    <div class="strip-seg active" id="seg0"></div>
+    <div class="strip-seg" id="seg1"></div>
+    <div class="strip-seg" id="seg2"></div>
+    <div class="strip-seg" id="seg3"></div>
+    <div class="strip-seg" id="seg4"></div>
+  </div>
+
+  <!-- ════════ SECTION 1: As 4 perguntas ════════ -->
+  <div class="section active" id="sec0">
+    <div class="sec-head">
+      <div class="sec-num">Parte 01 · O Problema que você resolve</div>
+      <h2 class="sec-title">Quatro camadas<br><em>do problema</em></h2>
+      <p class="sec-desc">Antes de nomear o que você resolve, é preciso enxergar o problema de dentro para fora — como sua persona vive, sente e interpreta.</p>
+    </div>
+
+    <div class="q-card">
+      <div class="q-num">01 · Situação atual</div>
+      <div class="q-label">O que a sua persona está tentando resolver agora?</div>
+      <textarea id="q1" placeholder="Descreva o problema que ela está enfrentando hoje, com as palavras que ela usaria..." rows="4"></textarea>
+      <div class="autosave" id="as1">✓ Salvo</div>
+    </div>
+
+    <div class="q-card" style="animation-delay:0.05s">
+      <div class="q-num">02 · Sentimento</div>
+      <div class="q-label">O que ela sente quando esse problema aparece?</div>
+      <textarea id="q2" placeholder="Frustração, vergonha, exaustão, ansiedade — que emoção acompanha esse problema?" rows="4"></textarea>
+      <div class="autosave" id="as2">✓ Salvo</div>
+    </div>
+
+    <div class="q-card" style="animation-delay:0.1s">
+      <div class="q-num">03 · Medo do futuro</div>
+      <div class="q-label">O que ela teme que aconteça se não resolver isso?</div>
+      <textarea id="q3" placeholder="O pior cenário que ela imagina se continuar como está..." rows="4"></textarea>
+      <div class="autosave" id="as3">✓ Salvo</div>
+    </div>
+
+    <div class="q-card" style="animation-delay:0.15s">
+      <div class="q-num">04 · Percepção de injustiça</div>
+      <div class="q-label">Por que isso é injusto ou doloroso aos olhos dela?</div>
+      <textarea id="q4" placeholder="O que faz esse problema parecer especialmente cruel ou desproporcional para ela?" rows="4"></textarea>
+      <div class="autosave" id="as4">✓ Salvo</div>
+    </div>
+
+    <div class="reflect-box">
+      <div class="reflect-icon">🪞</div>
+      <div class="reflect-text">
+        <strong>Reflita:</strong> qual dessas quatro camadas você está mais preparada para resolver agora? Não precisa resolver todas — profundidade numa camada vale mais do que superficialidade em todas.
+      </div>
+    </div>
+
+    <div class="nav">
+      <div></div>
+      <button class="btn btn-primary" onclick="goTo(1)">
+        Próxima parte <span class="arr-r arrow">→</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- ════════ SECTION 2: Os 3 problemas ════════ -->
+  <div class="section" id="sec1">
+    <div class="sec-head">
+      <div class="sec-num">Parte 02 · Os três problemas</div>
+      <h2 class="sec-title">Externo, interno<br><em>e filosófico</em></h2>
+      <p class="sec-desc">Todo problema tem três dimensões. Identificar onde mora o núcleo da dor da sua persona é o que separa uma comunicação genérica de uma que ressoa.</p>
+    </div>
+
+    <div class="problem-grid">
+      <div class="problem-card externo">
+        <div class="problem-badge">⬤ Externo</div>
+        <div class="problem-title">O problema externo</div>
+        <div class="problem-desc">O que ela verbaliza — objetivo, descritivo, palpável. A reclamação que ela faz em voz alta, que qualquer pessoa ao redor pode ouvir.</div>
+        <div class="problem-example">Ex: "Estou sempre cansada." · "Não consigo clientes." · "Minha agenda está uma bagunça."</div>
+        <textarea id="p_externo" placeholder="Qual é o problema externo da sua persona?" rows="3"></textarea>
+        <div class="autosave" id="as_ext">✓ Salvo</div>
+      </div>
+
+      <div class="problem-card interno" style="animation-delay:0.07s">
+        <div class="problem-badge">⬤ Interno</div>
+        <div class="problem-title">O problema interno</div>
+        <div class="problem-desc">O que ela sente, mas nem sempre sabe explicar. É a emoção por trás da reclamação — a ferida que o problema externo abre.</div>
+        <div class="problem-example">Ex: "Tenho medo de ser rejeitada." · "Sinto que não sou suficiente." · "Me sinto invisível."</div>
+        <textarea id="p_interno" placeholder="Qual é o problema interno da sua persona?" rows="3"></textarea>
+        <div class="autosave" id="as_int">✓ Salvo</div>
+      </div>
+
+      <div class="problem-card filosofico" style="animation-delay:0.14s">
+        <div class="problem-badge">⬤ Filosófico</div>
+        <div class="problem-title">O problema filosófico</div>
+        <div class="problem-desc">O conflito mais profundo — a injustiça que ela percebe no mundo. Vai além dela: é sobre o que deveria ser diferente.</div>
+        <div class="problem-example">Ex: "Não é justo eu me sentir assim depois de tudo que fiz." · "Por que pessoas dedicadas ficam para trás?"</div>
+        <textarea id="p_filosofico" placeholder="Qual é o problema filosófico da sua persona?" rows="3"></textarea>
+        <div class="autosave" id="as_fil">✓ Salvo</div>
+      </div>
+    </div>
+
+    <div class="reflect-box">
+      <div class="reflect-icon">💡</div>
+      <div class="reflect-text">
+        <strong>Lembre:</strong> seu produto precisa resolver pelo menos <em>um</em> com consistência. Tentar resolver os três ao mesmo tempo enfraquece sua promessa e confunde quem você quer atrair.
+      </div>
+    </div>
+
+    <div class="nav">
+      <button class="btn btn-ghost" onclick="goTo(0)">
+        <span class="arr-l arrow">←</span> Voltar
+      </button>
+      <button class="btn btn-primary" onclick="goTo(2)">
+        Próxima parte <span class="arr-r arrow">→</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- ════════ SECTION 3: Checklist ════════ -->
+  <div class="section" id="sec2">
+    <div class="sec-head">
+      <div class="sec-num">Parte 03 · Validação</div>
+      <h2 class="sec-title">Você <em>identificou</em><br>tudo que precisa?</h2>
+      <p class="sec-desc">Marque cada item à medida que você confirmar internamente. Essa clareza é o que torna sua comunicação precisa.</p>
+    </div>
+
+    <div class="checklist">
+      <div class="check-title">Lista de verificação</div>
+
+      <div class="check-item" id="ci0" onclick="toggleCheck(0)">
+        <div class="check-box"><span class="check-icon">✓</span></div>
+        <div class="check-text">Identifiquei o problema externo mais urgente da minha persona</div>
+      </div>
+
+      <div class="check-item" id="ci1" onclick="toggleCheck(1)">
+        <div class="check-box"><span class="check-icon">✓</span></div>
+        <div class="check-text">Entendi o sentimento interno que acompanha esse problema</div>
+      </div>
+
+      <div class="check-item" id="ci2" onclick="toggleCheck(2)">
+        <div class="check-box"><span class="check-icon">✓</span></div>
+        <div class="check-text">Nomeei o conflito filosófico que aprofunda a dor</div>
+      </div>
+
+      <div class="check-item" id="ci3" onclick="toggleCheck(3)">
+        <div class="check-box"><span class="check-icon">✓</span></div>
+        <div class="check-text">Escolhi qual camada vai guiar meu produto e minha comunicação</div>
+      </div>
+
+      <div class="check-item" id="ci4" onclick="toggleCheck(4)">
+        <div class="check-box"><span class="check-icon">✓</span></div>
+        <div class="check-text">Reconheci que minha autoridade depende da repetição dessa solução</div>
+      </div>
+
+      <div class="check-progress" id="checkProgress">0 de 5 concluídos</div>
+    </div>
+
+    <div class="nav">
+      <button class="btn btn-ghost" onclick="goTo(1)">
+        <span class="arr-l arrow">←</span> Voltar
+      </button>
+      <button class="btn btn-primary" onclick="goTo(3)">
+        Próxima parte <span class="arr-r arrow">→</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- ════════ SECTION 4: Frase final ════════ -->
+  <div class="section" id="sec3">
+    <div class="sec-head">
+      <div class="sec-num">Parte 04 · Síntese</div>
+      <h2 class="sec-title">A frase que<br><em>define tudo</em></h2>
+      <p class="sec-desc">Agora escreva uma frase objetiva, prática e emocional que diga exatamente o problema que você resolve. Evite estruturas genéricas.</p>
+    </div>
+
+    <div class="frase-card">
+      <div class="q-num">Complete com as palavras certas para você</div>
+
+      <div class="frase-template">
+        "Conduzo&nbsp;
+        <span class="frase-slot">
+          <input class="frase-input" type="text" id="fi1" placeholder="público" maxlength="60" oninput="updatePreview()">
+        </span>
+        &nbsp;que estão&nbsp;
+        <span class="frase-slot">
+          <input class="frase-input" type="text" id="fi2" placeholder="situação atual" maxlength="80" oninput="updatePreview()">
+        </span>
+        &nbsp;a alcançarem&nbsp;
+        <span class="frase-slot">
+          <input class="frase-input" type="text" id="fi3" placeholder="transformação concreta" maxlength="80" oninput="updatePreview()">
+        </span>."
+      </div>
+
+      <div class="preview-label">Pré-visualização da frase</div>
+      <div class="frase-preview" id="frasePreview">
+        <em>Preencha os campos acima para ver sua frase completa.</em>
+      </div>
+
+      <div class="frase-warning">
+        Essa frase não precisa ser perfeita agora — ela vai se refinar com o tempo. O importante é que ela seja específica o suficiente para que a persona certa se reconheça nela.
+      </div>
+    </div>
+
+    <div class="nav">
+      <button class="btn btn-ghost" onclick="goTo(2)">
+        <span class="arr-l arrow">←</span> Voltar
+      </button>
+      <button class="btn btn-verde" onclick="goTo(4)">
+        Concluir ✓
+      </button>
+    </div>
+  </div>
+
+  <!-- ════════ SECTION 5: Conclusão ════════ -->
+  <div class="section" id="sec4">
+    <div class="completion-wrap fade-in">
+      <div class="completion-icon">🌿</div>
+      <h2>Problema<br><em>mapeado</em></h2>
+      <p>Você identificou as camadas do problema, nomeou os três tipos e construiu sua frase de posicionamento. Esse é o núcleo da sua comunicação.</p>
+      <div class="completion-actions">
+        <button class="btn btn-verde" onclick="exportPDF()" id="btnExport">
+          ↓ Exportar PDF completo
+        </button>
+        <div class="pdf-loading" id="pdfLoading">
+          <div class="spinner"></div> Gerando PDF...
+        </div>
+        <button class="btn btn-outline" onclick="goTo(0)">
+          ← Revisar respostas
+        </button>
+      </div>
+    </div>
+  </div>
+
+</div><!-- /page -->
+
+<script>
+// ─── State ─────────────────────────────────────────────────────────────────
+let currentSec = 0;
+const totalSecs = 5;
+let checks = [false, false, false, false, false];
+
+const STORAGE_KEY = 'semente-problema';
+
+function loadData() {
+  try {
+    const d = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
+    if (d.q1) document.getElementById('q1').value = d.q1;
+    if (d.q2) document.getElementById('q2').value = d.q2;
+    if (d.q3) document.getElementById('q3').value = d.q3;
+    if (d.q4) document.getElementById('q4').value = d.q4;
+    if (d.p_externo) document.getElementById('p_externo').value = d.p_externo;
+    if (d.p_interno) document.getElementById('p_interno').value = d.p_interno;
+    if (d.p_filosofico) document.getElementById('p_filosofico').value = d.p_filosofico;
+    if (d.fi1) document.getElementById('fi1').value = d.fi1;
+    if (d.fi2) document.getElementById('fi2').value = d.fi2;
+    if (d.fi3) document.getElementById('fi3').value = d.fi3;
+    if (d.checks) checks = d.checks;
+    if (d.sec !== undefined) currentSec = d.sec;
+    renderChecks();
+    updatePreview();
+  } catch(e) {}
+}
+
+function saveData() {
+  const d = {
+    q1: document.getElementById('q1').value,
+    q2: document.getElementById('q2').value,
+    q3: document.getElementById('q3').value,
+    q4: document.getElementById('q4').value,
+    p_externo: document.getElementById('p_externo').value,
+    p_interno: document.getElementById('p_interno').value,
+    p_filosofico: document.getElementById('p_filosofico').value,
+    fi1: document.getElementById('fi1').value,
+    fi2: document.getElementById('fi2').value,
+    fi3: document.getElementById('fi3').value,
+    checks,
+    sec: currentSec
+  };
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(d));
+}
+
+// Autosave wiring
+let saveTimer = null;
+function autosave(id) {
+  clearTimeout(saveTimer);
+  saveTimer = setTimeout(() => {
+    saveData();
+    const el = document.getElementById('as' + id);
+    if (el) {
+      el.classList.add('show');
+      setTimeout(() => el.classList.remove('show'), 1800);
+    }
+  }, 700);
+}
+
+['q1','q2','q3','q4'].forEach(id => {
+  document.getElementById(id).addEventListener('input', () => autosave(id.slice(1)));
+});
+document.getElementById('p_externo').addEventListener('input', () => autosave('_ext'));
+document.getElementById('p_interno').addEventListener('input', () => autosave('_int'));
+document.getElementById('p_filosofico').addEventListener('input', () => autosave('_fil'));
+['fi1','fi2','fi3'].forEach(id => {
+  document.getElementById(id).addEventListener('input', () => { updatePreview(); saveData(); });
+});
+
+// ─── Navigation ────────────────────────────────────────────────────────────
+function goTo(n) {
+  saveData();
+  document.getElementById('sec' + currentSec).classList.remove('active');
+  currentSec = n;
+  const target = document.getElementById('sec' + n);
+  target.classList.add('active');
+  target.classList.remove('fade-in');
+  void target.offsetWidth;
+  target.classList.add('fade-in');
+
+  updateProgress();
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+  saveData();
+}
+
+function updateProgress() {
+  for (let i = 0; i < totalSecs; i++) {
+    const seg = document.getElementById('seg' + i);
+    if (!seg) continue;
+    seg.classList.remove('done', 'active');
+    if (i < currentSec) seg.classList.add('done');
+    else if (i === currentSec) seg.classList.add('active');
+  }
+}
+
+// ─── Checklist ─────────────────────────────────────────────────────────────
+function toggleCheck(i) {
+  checks[i] = !checks[i];
+  renderChecks();
+  saveData();
+}
+
+function renderChecks() {
+  checks.forEach((val, i) => {
+    const el = document.getElementById('ci' + i);
+    if (el) el.classList.toggle('checked', val);
+  });
+  const done = checks.filter(Boolean).length;
+  const prog = document.getElementById('checkProgress');
+  if (prog) prog.textContent = `${done} de ${checks.length} concluídos`;
+}
+
+// ─── Frase preview ─────────────────────────────────────────────────────────
+function updatePreview() {
+  const p = document.getElementById('frasePreview');
+  const v1 = document.getElementById('fi1').value.trim();
+  const v2 = document.getElementById('fi2').value.trim();
+  const v3 = document.getElementById('fi3').value.trim();
+
+  if (!v1 && !v2 && !v3) {
+    p.innerHTML = '<em>Preencha os campos acima para ver sua frase completa.</em>';
+    return;
+  }
+
+  const s1 = v1 || '<em>[público]</em>';
+  const s2 = v2 || '<em>[situação atual]</em>';
+  const s3 = v3 || '<em>[transformação concreta]</em>';
+
+  p.innerHTML = `"Conduzo <em>${s1}</em> que estão <em>${s2}</em> a alcançarem <em>${s3}</em>."`;
+}
+
+// ─── PDF Export ─────────────────────────────────────────────────────────────
+async function exportPDF() {
+  const btn = document.getElementById('btnExport');
+  const loading = document.getElementById('pdfLoading');
+  btn.style.display = 'none';
+  loading.classList.add('show');
+  await new Promise(r => setTimeout(r, 80));
+
+  try {
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF({ orientation: 'p', unit: 'mm', format: 'a4' });
+    const W = 210, mL = 22, mR = 22, cW = W - mL - mR;
+    let y = 0;
+
+    const C = {
+      creme: [245,240,232], bark: [61,46,30], dourado: [184,146,90],
+      rose: [201,137,122], verde: [90,122,90], areia: [221,208,188],
+      white: [255,255,255]
+    };
+
+    const sf = c => doc.setFillColor(c[0],c[1],c[2]);
+    const sd = c => doc.setDrawColor(c[0],c[1],c[2]);
+    const st = c => doc.setTextColor(c[0],c[1],c[2]);
+
+    function newPage() {
+      doc.addPage();
+      sf(C.creme); doc.rect(0,0,W,297,'F');
+      sf(C.verde); doc.rect(0,0,W,2,'F');
+      y = 22;
+    }
+
+    function checkY(need=20) {
+      if (y + need > 272) newPage();
+    }
+
+    function drawCard(items, accentColor) {
+      // calc height
+      let totalH = 10;
+      items.forEach(item => {
+        if (item.type === 'label') totalH += 7;
+        else if (item.type === 'title') totalH += 9;
+        else if (item.type === 'desc') {
+          const ls = doc.splitTextToSize(item.text, cW - 10);
+          totalH += ls.length * 5 + 6;
+        } else if (item.type === 'answer') {
+          const ls = doc.splitTextToSize(item.text || 'Não respondida.', cW - 16);
+          totalH += ls.length * 5.5 + 10;
+        }
+      });
+      totalH += 6;
+
+      checkY(totalH);
+
+      sf(C.white); doc.roundedRect(mL, y, cW, totalH, 1,1,'F');
+      sd(C.areia); doc.setLineWidth(0.3); doc.roundedRect(mL,y,cW,totalH,1,1,'S');
+      sf(accentColor); doc.rect(mL, y, 28, 1.5, 'F');
+
+      y += 8;
+      items.forEach(item => {
+        if (item.type === 'label') {
+          st(accentColor); doc.setFontSize(7); doc.setFont('helvetica','normal');
+          doc.text(item.text.toUpperCase(), mL+6, y);
+          y += 7;
+        } else if (item.type === 'title') {
+          st(C.bark); doc.setFontSize(13); doc.setFont('helvetica','bold');
+          doc.text(item.text, mL+6, y);
+          y += 9;
+        } else if (item.type === 'desc') {
+          const ls = doc.splitTextToSize(item.text, cW - 10);
+          st(C.bark); doc.setFontSize(9); doc.setFont('helvetica','normal');
+          doc.setGState(new doc.GState({opacity:0.6}));
+          doc.text(ls, mL+10, y);
+          doc.setGState(new doc.GState({opacity:1}));
+          y += ls.length * 5 + 6;
+        } else if (item.type === 'answer') {
+          const val = item.text && item.text.trim();
+          const ls = doc.splitTextToSize(val || 'Não respondida.', cW - 16);
+          sf([248,245,240]); doc.roundedRect(mL+6, y-2, cW-12, ls.length*5.5+8, 1,1,'F');
+          st(val ? C.bark : C.areia); doc.setFontSize(10); doc.setFont('helvetica', val ? 'normal' : 'italic');
+          if (!val) doc.setGState(new doc.GState({opacity:0.5}));
+          doc.text(ls, mL+10, y+4);
+          doc.setGState(new doc.GState({opacity:1}));
+          y += ls.length * 5.5 + 12;
+        }
+      });
+      y += 10;
+    }
+
+    // ── Capa ──
+    sf(C.creme); doc.rect(0,0,W,297,'F');
+    sf(C.verde); doc.rect(0,0,W,3,'F');
+
+    st([221,208,188]); doc.setFontSize(150); doc.setFont('helvetica','normal');
+    doc.text('3', W-24, 100, {align:'right'});
+
+    st(C.verde); doc.setFontSize(9); doc.setFont('helvetica','normal');
+    doc.text('3º ENCONTRO · SEMENTE', mL, 52);
+
+    st(C.bark); doc.setFontSize(36); doc.setFont('helvetica','bold');
+    doc.text('Mapeamento do', mL, 70);
+    st(C.verde); doc.setFontSize(36);
+    doc.text('Problema', mL, 84);
+
+    st(C.bark); doc.setFontSize(11); doc.setFont('helvetica','normal');
+    doc.setGState(new doc.GState({opacity:0.55}));
+    const sub = doc.splitTextToSize('O que você resolve, como a sua persona sente esse problema e qual camada guia a sua comunicação.', cW);
+    doc.text(sub, mL, 99);
+    doc.setGState(new doc.GState({opacity:1}));
+
+    sd(C.areia); doc.setLineWidth(0.4); doc.line(mL, 116, W-mR, 116);
+
+    const dateStr = new Date().toLocaleDateString('pt-BR', {day:'2-digit',month:'long',year:'numeric'});
+    st(C.bark); doc.setFontSize(9); doc.setGState(new doc.GState({opacity:0.4}));
+    doc.text(dateStr.toUpperCase(), mL, 126);
+    doc.setGState(new doc.GState({opacity:1}));
+
+    sf(C.bark); doc.rect(0,274,W,23,'F');
+    st(C.creme); doc.setFontSize(8); doc.setGState(new doc.GState({opacity:0.55}));
+    doc.text('Semente — Transformação em Movimento', mL, 288);
+    doc.setGState(new doc.GState({opacity:1}));
+
+    // ── Página 2: As 4 perguntas ──
+    newPage();
+    st(C.verde); doc.setFontSize(8); doc.setFont('helvetica','normal');
+    doc.text('PARTE 01 · O PROBLEMA QUE VOCÊ RESOLVE', mL, y); y += 12;
+    st(C.bark); doc.setFontSize(20); doc.setFont('helvetica','bold');
+    doc.text('Quatro camadas do problema', mL, y); y += 18;
+
+    const q_data = [
+      { num:'01', label:'Situação atual', q:'O que a sua persona está tentando resolver agora?', id:'q1' },
+      { num:'02', label:'Sentimento', q:'O que ela sente quando esse problema aparece?', id:'q2' },
+      { num:'03', label:'Medo do futuro', q:'O que ela teme que aconteça se não resolver isso?', id:'q3' },
+      { num:'04', label:'Injustiça', q:'Por que isso é injusto ou doloroso aos olhos dela?', id:'q4' },
+    ];
+
+    q_data.forEach(item => {
+      drawCard([
+        {type:'label', text: item.num + ' · ' + item.label},
+        {type:'title', text: item.q},
+        {type:'answer', text: document.getElementById(item.id).value}
+      ], C.verde);
+    });
+
+    // ── Página 3: Os 3 problemas ──
+    newPage();
+    st(C.verde); doc.setFontSize(8); doc.setFont('helvetica','normal');
+    doc.text('PARTE 02 · OS TRÊS PROBLEMAS', mL, y); y += 12;
+    st(C.bark); doc.setFontSize(20); doc.setFont('helvetica','bold');
+    doc.text('Externo, interno e filosófico', mL, y); y += 18;
+
+    const prob_data = [
+      {
+        label: '⬤  Problema Externo', color: C.verde,
+        title: 'O que ela verbaliza — objetivo e palpável',
+        desc: 'A reclamação que ela faz em voz alta, que qualquer pessoa ao redor pode ouvir e identificar.',
+        id: 'p_externo'
+      },
+      {
+        label: '⬤  Problema Interno', color: C.rose,
+        title: 'O que ela sente, mas nem sempre sabe explicar',
+        desc: 'A emoção por trás da reclamação — a ferida que o problema externo abre.',
+        id: 'p_interno'
+      },
+      {
+        label: '⬤  Problema Filosófico', color: C.dourado,
+        title: 'O conflito mais profundo — a injustiça percebida',
+        desc: 'Vai além dela: é sobre o que deveria ser diferente no mundo, na vida, no sistema.',
+        id: 'p_filosofico'
+      }
+    ];
+
+    prob_data.forEach(item => {
+      drawCard([
+        {type:'label', text: item.label},
+        {type:'title', text: item.title},
+        {type:'desc', text: item.desc},
+        {type:'answer', text: document.getElementById(item.id).value}
+      ], item.color);
+    });
+
+    // ── Página 4: Checklist + Frase ──
+    newPage();
+    st(C.verde); doc.setFontSize(8); doc.setFont('helvetica','normal');
+    doc.text('PARTE 03 · VALIDAÇÃO', mL, y); y += 12;
+    st(C.bark); doc.setFontSize(20); doc.setFont('helvetica','bold');
+    doc.text('Lista de verificação', mL, y); y += 18;
+
+    const checkLabels = [
+      'Identifiquei o problema externo mais urgente da minha persona',
+      'Entendi o sentimento interno que acompanha esse problema',
+      'Nomeei o conflito filosófico que aprofunda a dor',
+      'Escolhi qual camada vai guiar meu produto e minha comunicação',
+      'Reconheci que minha autoridade depende da repetição dessa solução'
+    ];
+
+    checkLabels.forEach((label, i) => {
+      checkY(14);
+      const done = checks[i];
+      sf(done ? C.verde : C.white);
+      doc.roundedRect(mL, y-4, 6, 6, 0.5,0.5,'F');
+      sd(done ? C.verde : C.areia); doc.setLineWidth(0.4);
+      doc.roundedRect(mL, y-4, 6, 6, 0.5,0.5,'S');
+      if (done) { st(C.white); doc.setFontSize(7); doc.text('✓', mL+1.5, y+0.5); }
+
+      st(C.bark); doc.setFontSize(10); doc.setFont('helvetica', done ? 'normal' : 'normal');
+      doc.setGState(new doc.GState({opacity: done ? 1 : 0.65}));
+      const ls = doc.splitTextToSize(label, cW - 16);
+      doc.text(ls, mL+10, y);
+      doc.setGState(new doc.GState({opacity:1}));
+      y += ls.length * 5.5 + 6;
+    });
+
+    y += 10;
+    checkY(60);
+
+    // Frase final
+    st(C.verde); doc.setFontSize(8); doc.setFont('helvetica','normal');
+    doc.text('PARTE 04 · SÍNTESE', mL, y); y += 12;
+    st(C.bark); doc.setFontSize(20); doc.setFont('helvetica','bold');
+    doc.text('A frase que define tudo', mL, y); y += 14;
+
+    const v1 = document.getElementById('fi1').value.trim();
+    const v2 = document.getElementById('fi2').value.trim();
+    const v3 = document.getElementById('fi3').value.trim();
+
+    const fraseCompleta = v1 && v2 && v3
+      ? `"Conduzo ${v1} que estão ${v2} a alcançarem ${v3}."`
+      : '(Frase não preenchida)';
+
+    checkY(50);
+    const fraseLines = doc.splitTextToSize(fraseCompleta, cW - 12);
+    const fraseH = fraseLines.length * 8 + 20;
+    sf(C.white); doc.roundedRect(mL, y, cW, fraseH, 1,1,'F');
+    sd(C.areia); doc.setLineWidth(0.3); doc.roundedRect(mL,y,cW,fraseH,1,1,'S');
+    sf(C.dourado); doc.rect(mL,y,cW,2,'F');
+
+    st(C.bark); doc.setFontSize(13); doc.setFont('helvetica','italic');
+    doc.text(fraseLines, mL+8, y+12);
+    y += fraseH + 16;
+
+    // Page numbers
+    const total = doc.internal.getNumberOfPages();
+    for (let p=1; p<=total; p++) {
+      doc.setPage(p);
+      if (p===1) continue;
+      st(C.bark); doc.setFontSize(8); doc.setFont('helvetica','normal');
+      doc.setGState(new doc.GState({opacity:0.3}));
+      doc.text(`${p-1}`, W/2, 290, {align:'center'});
+      doc.setGState(new doc.GState({opacity:1}));
+    }
+
+    doc.save('semente-problema.pdf');
+
+  } catch(err) {
+    console.error(err);
+    alert('Erro ao gerar PDF. Tente novamente.');
+  }
+
+  btn.style.display = 'inline-flex';
+  loading.classList.remove('show');
+}
+
+// ─── Init ───────────────────────────────────────────────────────────────────
+loadData();
+goTo(currentSec);
+</script>
+</body>
+</html>
