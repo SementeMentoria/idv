@@ -1,0 +1,1414 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Design Thinking — Semente</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;1,300;1,400&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<style>
+  :root {
+    --creme: #F5F0E8;
+    --bark: #3D2E1E;
+    --dourado: #B8925A;
+    --rose: #C9897A;
+    --verde: #5A7A5A;
+    --areia: #DDD0BC;
+    --areia-escura: #C8B89A;
+
+    /* Etapa colors */
+    --c-empatia:   #B8925A; /* dourado */
+    --c-definir:   #5A7A5A; /* verde */
+    --c-idear:     #C9897A; /* rose */
+    --c-prototipar:#7A6A9A; /* lilás sutil */
+    --c-testar:    #6A8A7A; /* verde-azulado */
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--creme);
+    color: var(--bark);
+    min-height: 100vh;
+  }
+
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
+    pointer-events: none;
+    z-index: 0;
+    opacity: 0.4;
+  }
+
+  .page {
+    max-width: 720px;
+    margin: 0 auto;
+    padding: 52px 24px 100px;
+    position: relative;
+    z-index: 1;
+  }
+
+  /* ─── Sections ─── */
+  .section { display: none; }
+  .section.active { display: block; animation: fadeUp 0.45s ease both; }
+
+  /* ─── Header ─── */
+  .header {
+    text-align: center;
+    margin-bottom: 48px;
+    animation: fadeDown 0.7s ease both;
+  }
+
+  .eyebrow {
+    font-size: 10px;
+    font-weight: 500;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    color: var(--dourado);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    margin-bottom: 18px;
+  }
+  .eyebrow::before, .eyebrow::after {
+    content: '';
+    width: 28px; height: 1px;
+    background: var(--dourado); opacity: 0.5;
+  }
+
+  .header h1 {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: clamp(34px, 6vw, 50px);
+    font-weight: 300;
+    line-height: 1.1;
+    letter-spacing: -0.01em;
+  }
+  .header h1 em { font-style: italic; color: var(--dourado); }
+
+  .header-sub {
+    margin-top: 14px;
+    font-size: 13.5px;
+    font-weight: 300;
+    opacity: 0.6;
+    line-height: 1.65;
+    max-width: 420px;
+    margin-inline: auto;
+  }
+
+  /* ─── Progress strip ─── */
+  .progress-strip {
+    display: flex;
+    gap: 4px;
+    margin-bottom: 36px;
+  }
+  .strip-seg {
+    flex: 1; height: 3px;
+    border-radius: 2px;
+    background: var(--areia);
+    transition: background 0.4s;
+  }
+  .strip-seg.done     { background: var(--dourado); }
+  .strip-seg.active   { background: var(--bark); }
+
+  /* ─── Mandala SVG section ─── */
+  .mandala-wrap {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 32px;
+    margin-bottom: 40px;
+  }
+
+  .mandala-svg-box {
+    width: 100%;
+    max-width: 340px;
+  }
+
+  .etapas-list {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    width: 100%;
+  }
+
+  @media (min-width: 560px) {
+    .mandala-wrap { flex-direction: row; align-items: center; }
+    .mandala-svg-box { max-width: 280px; flex-shrink: 0; }
+    .etapas-list { grid-template-columns: 1fr; gap: 10px; }
+  }
+
+  .etapa-pill {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 14px;
+    border-radius: 2px;
+    border: 1px solid var(--areia);
+    background: white;
+    cursor: pointer;
+    transition: all 0.2s;
+    text-align: left;
+  }
+
+  .etapa-pill:hover { border-color: var(--bark); transform: translateX(3px); }
+  .etapa-pill.done  { border-color: var(--dourado); }
+
+  .pill-dot {
+    width: 10px; height: 10px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+
+  .pill-label {
+    font-size: 12px;
+    font-weight: 500;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+  }
+
+  .pill-check {
+    margin-left: auto;
+    font-size: 12px;
+    color: var(--dourado);
+    opacity: 0;
+    transition: opacity 0.2s;
+  }
+  .etapa-pill.done .pill-check { opacity: 1; }
+
+  /* ─── Intro card ─── */
+  .intro-card {
+    background: white;
+    border: 1px solid var(--areia);
+    border-radius: 2px;
+    padding: 36px 40px 32px;
+    margin-bottom: 28px;
+    box-shadow: 0 1px 16px rgba(61,46,30,0.05);
+    position: relative;
+  }
+
+  .intro-card p {
+    font-size: 14px;
+    font-weight: 300;
+    line-height: 1.8;
+    opacity: 0.75;
+  }
+
+  .intro-card p + p { margin-top: 12px; }
+
+  /* ─── Etapa section ─── */
+  .etapa-header {
+    display: flex;
+    align-items: flex-start;
+    gap: 16px;
+    margin-bottom: 28px;
+  }
+
+  .etapa-badge {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 5px;
+    flex-shrink: 0;
+  }
+
+  .etapa-circle {
+    width: 48px; height: 48px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 20px;
+  }
+
+  .etapa-num {
+    font-size: 9px;
+    font-weight: 500;
+    letter-spacing: 0.1em;
+    opacity: 0.45;
+    text-transform: uppercase;
+  }
+
+  .etapa-title-block {}
+
+  .etapa-tag {
+    font-size: 10px;
+    font-weight: 500;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    margin-bottom: 6px;
+  }
+
+  .etapa-title {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: clamp(26px, 4vw, 34px);
+    font-weight: 400;
+    line-height: 1.2;
+  }
+  .etapa-title em { font-style: italic; }
+
+  /* ─── Explanation box ─── */
+  .explanation {
+    background: white;
+    border: 1px solid var(--areia);
+    border-radius: 2px;
+    padding: 24px 28px;
+    margin-bottom: 20px;
+    position: relative;
+    box-shadow: 0 1px 10px rgba(61,46,30,0.04);
+  }
+
+  .explanation::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 20px; right: 20px;
+    height: 2px;
+  }
+
+  .explanation-label {
+    font-size: 10px;
+    font-weight: 500;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    margin-bottom: 10px;
+    opacity: 0.6;
+  }
+
+  .explanation p {
+    font-size: 13.5px;
+    font-weight: 300;
+    line-height: 1.75;
+    opacity: 0.8;
+  }
+
+  .explanation p + p { margin-top: 10px; }
+
+  .explanation strong { font-weight: 500; opacity: 1; }
+
+  /* ─── Questions ─── */
+  .q-block {
+    background: white;
+    border: 1px solid var(--areia);
+    border-radius: 2px;
+    padding: 26px 30px 22px;
+    margin-bottom: 14px;
+    box-shadow: 0 1px 8px rgba(61,46,30,0.04);
+    position: relative;
+  }
+
+  .q-block::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 20px; right: 20px;
+    height: 1.5px;
+  }
+
+  .q-label {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 19px;
+    font-weight: 400;
+    line-height: 1.3;
+    margin-bottom: 6px;
+  }
+
+  .q-sub {
+    font-size: 12px;
+    font-weight: 300;
+    opacity: 0.5;
+    line-height: 1.5;
+    margin-bottom: 16px;
+    font-style: italic;
+  }
+
+  textarea {
+    width: 100%;
+    background: var(--creme);
+    border: 1px solid var(--areia);
+    border-radius: 2px;
+    padding: 13px 15px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 14px;
+    font-weight: 300;
+    line-height: 1.75;
+    color: var(--bark);
+    resize: vertical;
+    outline: none;
+    transition: border-color 0.2s, box-shadow 0.2s;
+    min-height: 90px;
+  }
+
+  textarea::placeholder { color: var(--bark); opacity: 0.3; font-style: italic; }
+
+  textarea:focus {
+    border-color: var(--dourado);
+    box-shadow: 0 0 0 3px rgba(184,146,90,0.1);
+  }
+
+  .autosave {
+    font-size: 10px;
+    color: var(--verde);
+    opacity: 0;
+    text-align: right;
+    margin-top: 5px;
+    transition: opacity 0.3s;
+    height: 14px;
+  }
+  .autosave.show { opacity: 1; }
+
+  /* ─── Questions (perguntas reflexivas dentro de empatia) ─── */
+  .ref-questions {
+    background: rgba(184,146,90,0.07);
+    border: 1px solid rgba(184,146,90,0.2);
+    border-radius: 2px;
+    padding: 16px 20px;
+    margin-bottom: 16px;
+  }
+
+  .ref-questions p {
+    font-size: 13px;
+    font-weight: 300;
+    line-height: 1.7;
+    opacity: 0.75;
+    font-style: italic;
+  }
+
+  .ref-questions p::before { content: '→ '; opacity: 0.5; }
+  .ref-questions p + p { margin-top: 6px; }
+
+  /* ─── Callout ─── */
+  .callout {
+    border-radius: 2px;
+    padding: 18px 22px;
+    margin-bottom: 16px;
+    display: flex;
+    gap: 12px;
+    align-items: flex-start;
+  }
+
+  .callout-icon { font-size: 16px; flex-shrink: 0; margin-top: 1px; }
+
+  .callout-text {
+    font-size: 13px;
+    font-weight: 300;
+    line-height: 1.7;
+    opacity: 0.85;
+  }
+  .callout-text strong { font-weight: 500; }
+
+  .callout-bark {
+    background: rgba(61,46,30,0.06);
+    border: 1px solid rgba(61,46,30,0.12);
+  }
+
+  /* ─── Nav ─── */
+  .nav {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 32px;
+    padding-top: 24px;
+    border-top: 1px solid var(--areia);
+  }
+
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 13px;
+    font-weight: 500;
+    letter-spacing: 0.06em;
+    padding: 12px 24px;
+    border-radius: 2px;
+    border: none;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+
+  .btn-ghost {
+    background: transparent;
+    color: var(--bark);
+    opacity: 0.45;
+    padding-left: 0;
+  }
+  .btn-ghost:hover { opacity: 1; }
+
+  .btn-primary {
+    background: var(--bark);
+    color: var(--creme);
+  }
+  .btn-primary:hover {
+    background: #2a1f14;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 16px rgba(61,46,30,0.2);
+  }
+
+  .btn-dourado {
+    background: var(--dourado);
+    color: white;
+  }
+  .btn-dourado:hover {
+    background: #a07840;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 16px rgba(184,146,90,0.3);
+  }
+
+  .btn-outline {
+    background: transparent;
+    border: 1px solid var(--areia-escura);
+    color: var(--bark);
+    opacity: 0.7;
+  }
+  .btn-outline:hover { opacity: 1; border-color: var(--bark); }
+
+  .arrow { transition: transform 0.2s; }
+  .btn-primary:hover .arr-r { transform: translateX(3px); }
+  .btn-ghost:hover .arr-l   { transform: translateX(-3px); }
+
+  /* ─── Completion ─── */
+  .completion-wrap {
+    text-align: center;
+    padding: 52px 36px 44px;
+    background: white;
+    border: 1px solid var(--areia);
+    border-radius: 2px;
+    box-shadow: 0 1px 16px rgba(61,46,30,0.05);
+    position: relative;
+    overflow: hidden;
+  }
+
+  .completion-wrap::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 3px;
+    background: linear-gradient(90deg, var(--c-empatia), var(--c-definir), var(--c-idear), var(--c-prototipar), var(--c-testar));
+  }
+
+  .completion-icon {
+    width: 68px; height: 68px;
+    margin: 0 auto 28px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--dourado), var(--rose));
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 26px;
+  }
+
+  .completion-wrap h2 {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 36px;
+    font-weight: 300;
+    margin-bottom: 14px;
+    line-height: 1.2;
+  }
+  .completion-wrap h2 em { font-style: italic; color: var(--dourado); }
+
+  .completion-wrap p {
+    font-size: 14px;
+    font-weight: 300;
+    line-height: 1.7;
+    opacity: 0.6;
+    max-width: 380px;
+    margin: 0 auto 36px;
+  }
+
+  .completion-actions {
+    display: flex; flex-direction: column;
+    align-items: center; gap: 12px;
+  }
+
+  .pdf-loading { display: none; align-items: center; gap: 8px; font-size: 12px; color: var(--dourado); }
+  .pdf-loading.show { display: flex; }
+
+  .spinner {
+    width: 14px; height: 14px;
+    border: 2px solid var(--areia);
+    border-top-color: var(--dourado);
+    border-radius: 50%;
+    animation: spin 0.7s linear infinite;
+  }
+
+  /* ─── Etapa accent colors applied ─── */
+  [data-etapa="empatia"]   { --ec: var(--c-empatia); }
+  [data-etapa="definir"]   { --ec: var(--c-definir); }
+  [data-etapa="idear"]     { --ec: var(--c-idear); }
+  [data-etapa="prototipar"]{ --ec: var(--c-prototipar); }
+  [data-etapa="testar"]    { --ec: var(--c-testar); }
+
+  .etapa-tag   { color: var(--ec); }
+  .etapa-title em { color: var(--ec); }
+  .etapa-circle { background: color-mix(in srgb, var(--ec) 15%, white); }
+  .explanation::before { background: linear-gradient(90deg, var(--ec), transparent); }
+  .q-block::before     { background: linear-gradient(90deg, var(--ec), transparent); }
+  textarea:focus       { border-color: var(--ec); box-shadow: 0 0 0 3px color-mix(in srgb, var(--ec) 15%, transparent); }
+
+  /* ─── Animations ─── */
+  @keyframes fadeDown {
+    from { opacity: 0; transform: translateY(-16px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(16px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  @media (max-width: 480px) {
+    .intro-card, .explanation, .q-block { padding: 22px 18px 18px; }
+    .etapa-circle { width: 40px; height: 40px; font-size: 16px; }
+  }
+</style>
+</head>
+<body>
+<div class="page">
+
+  <!-- HEADER -->
+  <div class="header">
+    <div class="eyebrow">4º Encontro · Semente</div>
+    <h1>Design<br><em>Thinking</em></h1>
+    <p class="header-sub">Cinco etapas para construir um produto que nasce do que sua persona precisa — não do que você quer ensinar.</p>
+  </div>
+
+  <!-- Progress strip: intro + 5 etapas + conclusão = 7 segs -->
+  <div class="progress-strip" id="progressStrip">
+    <div class="strip-seg active" id="seg0"></div>
+    <div class="strip-seg" id="seg1"></div>
+    <div class="strip-seg" id="seg2"></div>
+    <div class="strip-seg" id="seg3"></div>
+    <div class="strip-seg" id="seg4"></div>
+    <div class="strip-seg" id="seg5"></div>
+    <div class="strip-seg" id="seg6"></div>
+  </div>
+
+  <!-- ══════════════════════════════════════════
+       SECTION 0 — Introdução + Mandala
+  ══════════════════════════════════════════ -->
+  <div class="section active" id="sec0">
+
+    <div class="mandala-wrap">
+      <!-- Mandala SVG — pie slices calculated with exact trigonometry
+           Each slice = 72°, starting at -90° (top), going clockwise.
+           r=110, cx=cy=150
+           Angles (degrees from top, clockwise):
+             0→72:   empatia   (top → upper-right)   #B8925A
+             72→144: definir   (upper-right → lower-right) #5A7A5A
+             144→216: idear    (lower-right → lower-left) #C9897A
+             216→288: prototipar (lower-left → upper-left) #7A6A9A
+             288→360: testar   (upper-left → top) #6A8A7A
+      -->
+      <div class="mandala-svg-box">
+        <svg viewBox="0 0 300 300" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto;">
+          <defs>
+            <clipPath id="circ2"><circle cx="150" cy="150" r="110"/></clipPath>
+          </defs>
+
+          <!-- Shadow -->
+          <circle cx="150" cy="153" r="112" fill="rgba(61,46,30,0.08)"/>
+          <!-- BG circle -->
+          <circle cx="150" cy="150" r="110" fill="#EDE8DE" stroke="#DDD0BC" stroke-width="1.5"/>
+
+          <!-- Slice 1: empatia — 0° to 72° (top to upper-right)
+               Start: (150, 40)  End: (104.6+150, 110*sin72°+150) = (184.7, 254.6)... recalc:
+               -90°+0=−90° → (150+110·cos−90, 150+110·sin−90) = (150, 40)
+               -90°+72=−18° → (150+110·cos−18, 150+110·sin−18) = (150+104.6, 150−34.0) = (254.6, 116.0)
+          -->
+          <path d="M150,150 L150,40 A110,110 0 0,1 254.6,116.0 Z" fill="#B8925A" clip-path="url(#circ2)"/>
+
+          <!-- Slice 2: definir — 72° to 144°
+               -18° → (254.6, 116.0)
+               -90+144=54° → (150+110·cos54, 150+110·sin54) = (150+64.7, 150+89.0) = (214.7, 239.0)
+          -->
+          <path d="M150,150 L254.6,116.0 A110,110 0 0,1 214.7,239.0 Z" fill="#5A7A5A" clip-path="url(#circ2)"/>
+
+          <!-- Slice 3: idear — 144° to 216°
+               54° → (214.7, 239.0)
+               -90+216=126° → (150+110·cos126, 150+110·sin126) = (150−64.7, 150+89.0) = (85.3, 239.0)
+          -->
+          <path d="M150,150 L214.7,239.0 A110,110 0 0,1 85.3,239.0 Z" fill="#C9897A" clip-path="url(#circ2)"/>
+
+          <!-- Slice 4: prototipar — 216° to 288°
+               126° → (85.3, 239.0)
+               -90+288=198° → (150+110·cos198, 150+110·sin198) = (150−104.6, 150−34.0) = (45.4, 116.0)
+          -->
+          <path d="M150,150 L85.3,239.0 A110,110 0 0,1 45.4,116.0 Z" fill="#7A6A9A" clip-path="url(#circ2)"/>
+
+          <!-- Slice 5: testar — 288° to 360°
+               198° → (45.4, 116.0)
+               -90+360=270° → (150, 40)
+          -->
+          <path d="M150,150 L45.4,116.0 A110,110 0 0,1 150,40 Z" fill="#6A8A7A" clip-path="url(#circ2)"/>
+
+          <!-- Dividers — all from center to exact rim points -->
+          <line x1="150" y1="150" x2="150"  y2="40"    stroke="white" stroke-width="1.5" opacity="0.6"/>
+          <line x1="150" y1="150" x2="254.6" y2="116.0" stroke="white" stroke-width="1.5" opacity="0.6"/>
+          <line x1="150" y1="150" x2="214.7" y2="239.0" stroke="white" stroke-width="1.5" opacity="0.6"/>
+          <line x1="150" y1="150" x2="85.3"  y2="239.0" stroke="white" stroke-width="1.5" opacity="0.6"/>
+          <line x1="150" y1="150" x2="45.4"  y2="116.0" stroke="white" stroke-width="1.5" opacity="0.6"/>
+
+          <!-- Center circle -->
+          <circle cx="150" cy="150" r="38" fill="#F5F0E8" stroke="#DDD0BC" stroke-width="1"/>
+          <text x="150" y="146" text-anchor="middle" font-family="serif" font-size="9.5" fill="#3D2E1E" opacity="0.55" font-style="italic">Design</text>
+          <text x="150" y="159" text-anchor="middle" font-family="serif" font-size="9.5" fill="#3D2E1E" opacity="0.55" font-style="italic">Thinking</text>
+
+          <!-- Labels — midpoint of each slice arc at r=75 from center
+               Slice midpoints (mid-angle from top, clockwise):
+               empatia:    -90+36 = -54° → (150+75·cos−54, 150+75·sin−54) = (194.1, 89.3)
+               definir:    -90+108 = 18° → (150+75·cos18,  150+75·sin18)  = (221.4, 173.2)  ... wait use r=72
+               Let's use r=70 for label placement:
+               empatia:   mid=-54°: (150+70·cos−54, 150+70·sin−54) = (150+41.1, 150−56.6) = (191.1, 93.4)
+               definir:   mid=18°:  (150+70·cos18,  150+70·sin18)  = (150+66.6, 150+21.6) = (216.6, 171.6)
+               idear:     mid=90°:  (150+70·cos90,  150+70·sin90)  = (150+0,    150+70)    = (150,   220)
+               prototipar:mid=162°: (150+70·cos162, 150+70·sin162) = (150−66.6, 150+21.6) = (83.4,  171.6)
+               testar:    mid=234°: (150+70·cos234, 150+70·sin234) = (150−41.1, 150−56.6) = (108.9, 93.4)
+          -->
+          <text x="191" y="90"  text-anchor="middle" font-family="sans-serif" font-size="9" font-weight="600" fill="white" letter-spacing="0.5">empatizar</text>
+          <text x="217" y="168" text-anchor="middle" font-family="sans-serif" font-size="9" font-weight="600" fill="white" letter-spacing="0.5">definir</text>
+          <text x="150" y="221" text-anchor="middle" font-family="sans-serif" font-size="9" font-weight="600" fill="white" letter-spacing="0.5">idear</text>
+          <text x="83"  y="168" text-anchor="middle" font-family="sans-serif" font-size="9" font-weight="600" fill="white" letter-spacing="0.5">prototipar</text>
+          <text x="109" y="90"  text-anchor="middle" font-family="sans-serif" font-size="9" font-weight="600" fill="white" letter-spacing="0.5">testar</text>
+
+          <!-- Circular arrow — a clean arc outside the circle with a proper arrowhead -->
+          <!-- Arc from ~10° to ~80° (just past empatia into definir gap), clockwise, r=128 -->
+          <path d="M 193,25 A 132,132 0 0,1 272,168" stroke="#C8B89A" stroke-width="2" fill="none" stroke-linecap="round" stroke-dasharray="0"/>
+          <!-- Arrowhead at end of arc (pointing roughly downward-left at ~80°) -->
+          <polygon points="272,168 264,157 276,156" fill="#C8B89A"/>
+
+          <!-- Second arc — bottom going back, from ~200° to ~290° -->
+          <path d="M 108,275 A 132,132 0 0,1 28,132" stroke="#C8B89A" stroke-width="2" fill="none" stroke-linecap="round"/>
+          <polygon points="28,132 36,143 24,144" fill="#C8B89A"/>
+        </svg>
+      </div>
+
+      <!-- Etapas list -->
+      <div class="etapas-list">
+        <div class="etapa-pill" id="pill-empatia" onclick="goTo(1)">
+          <div class="pill-dot" style="background:var(--c-empatia)"></div>
+          <span class="pill-label">01 · Empatizar</span>
+          <span class="pill-check">✓</span>
+        </div>
+        <div class="etapa-pill" id="pill-definir" onclick="goTo(2)">
+          <div class="pill-dot" style="background:var(--c-definir)"></div>
+          <span class="pill-label">02 · Definir</span>
+          <span class="pill-check">✓</span>
+        </div>
+        <div class="etapa-pill" id="pill-idear" onclick="goTo(3)">
+          <div class="pill-dot" style="background:var(--c-idear)"></div>
+          <span class="pill-label">03 · Idear</span>
+          <span class="pill-check">✓</span>
+        </div>
+        <div class="etapa-pill" id="pill-prototipar" onclick="goTo(4)">
+          <div class="pill-dot" style="background:var(--c-prototipar)"></div>
+          <span class="pill-label">04 · Prototipar</span>
+          <span class="pill-check">✓</span>
+        </div>
+        <div class="etapa-pill" id="pill-testar" onclick="goTo(5)">
+          <div class="pill-dot" style="background:var(--c-testar)"></div>
+          <span class="pill-label">05 · Testar</span>
+          <span class="pill-check">✓</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Diagrama de triângulos — fluxo expansão / introspecção -->
+    <!--
+      Lógica da imagem de referência:
+      Cada par forma um "losango" com dois triângulos que se tocam pela ponta.
+        - Triângulo ESQUERDO do par: vértice à esquerda, base à direita → aponta para DIREITA (expansão)
+          Label no TOPO, alinhado à esquerda do triângulo
+        - Triângulo DIREITO do par: base à esquerda, vértice à direita → aponta para ESQUERDA (introspecção)
+          Label na BASE, alinhado ao centro do triângulo
+      Par 1: Empatia (esq, escuro) + Definir (dir, claro)
+      Par 2: Idear (esq, escuro) + Prototipar (dir, claro)
+      Solo: Testar (esq, escuro)
+
+      Medidas (viewBox 660 × 140):
+        Altura dos triângulos: h = 80px  (top=30, bottom=110)
+        Largura de cada triângulo: w = 130px
+        Gap entre pares: 20px
+
+      Posições X dos vértices:
+        Par 1:
+          T1 Empatia:    esq(10,70) → topo(10,30) → base(10,110) → ponta(140,70)
+                         polygon: 10,30  10,110  140,70
+          T2 Definir:    ponta(140,70) → topo(270,30) → base(270,110)
+                         polygon: 140,70  270,30  270,110
+
+        Par 2 (gap 20 → começa em 290):
+          T3 Idear:      300,30  300,110  430,70
+          T4 Prototipar: 430,70  560,30  560,110
+
+        Solo (gap 20 → começa em 580):
+          T5 Testar:     580,30  580,110  710,70
+                         (viewBox estende para 720)
+    -->
+    <div style="margin-bottom:28px;">
+      <svg viewBox="0 0 720 150" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto;display:block;">
+
+        <!-- ── Par 1 ── -->
+        <!-- T1: Empatia — vértice esquerdo, aponta direita (expansão) — tom escuro -->
+        <polygon points="10,30 10,110 140,70" fill="#9A7840"/>
+        <!-- T2: Definir — vértice direito, aponta esquerda (introspecção) — tom claro -->
+        <polygon points="140,70 270,30 270,110" fill="#C8A870"/>
+
+        <!-- Labels par 1 -->
+        <text x="10"  y="22" font-family="'Cormorant Garamond',serif" font-size="15" font-weight="700" fill="#3D2E1E">Empatia</text>
+        <text x="175" y="130" text-anchor="middle" font-family="'Cormorant Garamond',serif" font-size="15" font-weight="700" fill="#3D2E1E">Definir</text>
+
+        <!-- ── Par 2 ── -->
+        <!-- T3: Idear — vértice esquerdo, aponta direita — tom escuro -->
+        <polygon points="300,30 300,110 430,70" fill="#9A7840"/>
+        <!-- T4: Prototipar — vértice direito, aponta esquerda — tom claro -->
+        <polygon points="430,70 560,30 560,110" fill="#C8A870"/>
+
+        <!-- Labels par 2 -->
+        <text x="300" y="22" font-family="'Cormorant Garamond',serif" font-size="15" font-weight="700" fill="#3D2E1E">Idear</text>
+        <text x="465" y="130" text-anchor="middle" font-family="'Cormorant Garamond',serif" font-size="15" font-weight="700" fill="#3D2E1E">Prototipar</text>
+
+        <!-- ── Solo ── -->
+        <!-- T5: Testar — vértice esquerdo, aponta direita — tom escuro -->
+        <polygon points="590,30 590,110 720,70" fill="#9A7840"/>
+
+        <!-- Label solo -->
+        <text x="590" y="22" font-family="'Cormorant Garamond',serif" font-size="15" font-weight="700" fill="#3D2E1E">Testar</text>
+
+      </svg>
+      <p style="text-align:center;font-size:11.5px;font-weight:300;opacity:0.5;letter-spacing:0.05em;margin-top:2px;">
+        Etapas que <em>expandem</em> alternam com etapas que <em>sintetizam</em>
+      </p>
+    </div>
+
+    <div class="intro-card">
+      <p>O Design Thinking é uma abordagem centrada na persona — não no produto que você quer criar, mas na transformação que ela precisa viver. São cinco etapas iterativas que partem da escuta profunda e chegam à ação testada.</p>
+      <p>Você <strong>não está criando um produto com base no que quer ensinar</strong>. Está criando com base no que ela precisa resolver. Essa diferença muda tudo na sua comunicação, na sua oferta e na sua autoridade.</p>
+    </div>
+
+    <div class="nav">
+      <div></div>
+      <button class="btn btn-primary" onclick="goTo(1)">
+        Começar pela Empatia <span class="arr-r arrow">→</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════
+       SECTION 1 — Empatizar
+  ══════════════════════════════════════════ -->
+  <div class="section" id="sec1" data-etapa="empatia">
+
+    <div class="etapa-header">
+      <div class="etapa-badge">
+        <div class="etapa-circle">🔍</div>
+        <div class="etapa-num">01 / 05</div>
+      </div>
+      <div class="etapa-title-block">
+        <div class="etapa-tag">Empatizar</div>
+        <h2 class="etapa-title">Hora de ouvir<br><em>mais do que falar</em></h2>
+      </div>
+    </div>
+
+    <div class="explanation">
+      <div class="explanation-label">O que é esta etapa</div>
+      <p><strong>Empatia é o momento de ampliar o conhecimento — hora de divergir.</strong> Seu papel aqui é observar, ouvir e entender profundamente o que sua persona sente, vive e precisa.</p>
+      <p>Você não está criando o produto com base no que quer ensinar, e sim com base no que ela <strong>precisa resolver</strong>. Pesquise o mercado: o que já está sendo entregue? O que <em>não</em> está sendo entregue? Onde estão os GAPs?</p>
+    </div>
+
+    <div class="ref-questions">
+      <p>O que ela está tentando resolver agora?</p>
+      <p>Como ela se sente em relação a esse problema?</p>
+      <p>O que ela já tentou e não funcionou?</p>
+    </div>
+
+    <div class="q-block">
+      <div class="q-label">PC — Pesquisa de Campo / Concorrentes</div>
+      <div class="q-sub">O que o mercado já entrega? Onde estão os GAPs? O que seus concorrentes fazem bem ou mal?</div>
+      <textarea id="em_pc" placeholder="Anote o que você observou sobre concorrentes e o mercado..." rows="4"></textarea>
+      <div class="autosave" id="as_em_pc">✓ Salvo</div>
+    </div>
+
+    <div class="q-block">
+      <div class="q-label">PB — Pesquisa em Buscadores</div>
+      <div class="q-sub">O que sua persona pesquisa no Google e nas redes sociais? Quais termos, perguntas, conteúdos ela consome?</div>
+      <textarea id="em_pb" placeholder="Anote o que você encontrou nos buscadores e redes sociais..." rows="4"></textarea>
+      <div class="autosave" id="as_em_pb">✓ Salvo</div>
+    </div>
+
+    <div class="q-block">
+      <div class="q-label">PCI — Pesquisa com Clientes</div>
+      <div class="q-sub">Conversas reais, pesquisas, DMs, feedbacks — o que ela disse com as próprias palavras?</div>
+      <textarea id="em_pci" placeholder="Anote falas reais, padrões que você percebeu, o que ela repetiu..." rows="4"></textarea>
+      <div class="autosave" id="as_em_pci">✓ Salvo</div>
+    </div>
+
+    <div class="nav">
+      <button class="btn btn-ghost" onclick="goTo(0)">
+        <span class="arr-l arrow">←</span> Voltar
+      </button>
+      <button class="btn btn-primary" onclick="goTo(2)">
+        Ir para Definir <span class="arr-r arrow">→</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════
+       SECTION 2 — Definir
+  ══════════════════════════════════════════ -->
+  <div class="section" id="sec2" data-etapa="definir">
+
+    <div class="etapa-header">
+      <div class="etapa-badge">
+        <div class="etapa-circle">🎯</div>
+        <div class="etapa-num">02 / 05</div>
+      </div>
+      <div class="etapa-title-block">
+        <div class="etapa-tag">Definir</div>
+        <h2 class="etapa-title">Sintetizar tudo<br><em>num problema central</em></h2>
+      </div>
+    </div>
+
+    <div class="explanation">
+      <div class="explanation-label">O que é esta etapa</div>
+      <p><strong>Definir é o momento de sintetizar tudo o que você observou em um problema central.</strong> O erro mais comum é tentar resolver várias coisas ao mesmo tempo.</p>
+      <p>É a etapa onde você organiza e analisa as informações para identificar padrões, insights e pontos de dor da persona. Com base nessa análise, o problema é <strong>reafirmado ou reformulado</strong>. Esta etapa é fundamental pois direciona todo o processo subsequente de busca por soluções.</p>
+    </div>
+
+    <div class="q-block">
+      <div class="q-label">Quais padrões você identificou na pesquisa?</div>
+      <div class="q-sub">O que se repetiu nas três fontes de pesquisa? Onde as dores se cruzam?</div>
+      <textarea id="def_padroes" placeholder="Liste os padrões, repetições e pontos em comum que você encontrou..." rows="4"></textarea>
+      <div class="autosave" id="as_def_padroes">✓ Salvo</div>
+    </div>
+
+    <div class="q-block">
+      <div class="q-label">Qual é o problema central da sua persona?</div>
+      <div class="q-sub">Em uma frase clara e específica — o problema que você vai resolver com consistência.</div>
+      <textarea id="def_problema" placeholder="Escreva o problema central que sintetiza tudo que você encontrou..." rows="3"></textarea>
+      <div class="autosave" id="as_def_problema">✓ Salvo</div>
+    </div>
+
+    <div class="q-block">
+      <div class="q-label">Precisou reformular algo que você acreditava antes?</div>
+      <div class="q-sub">A pesquisa confirmou suas hipóteses ou revelou algo diferente do que você esperava?</div>
+      <textarea id="def_reformulou" placeholder="O que mudou ou foi confirmado depois da fase de empatia?" rows="3"></textarea>
+      <div class="autosave" id="as_def_reformulou">✓ Salvo</div>
+    </div>
+
+    <div class="nav">
+      <button class="btn btn-ghost" onclick="goTo(1)">
+        <span class="arr-l arrow">←</span> Voltar
+      </button>
+      <button class="btn btn-primary" onclick="goTo(3)">
+        Ir para Idear <span class="arr-r arrow">→</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════
+       SECTION 3 — Idear
+  ══════════════════════════════════════════ -->
+  <div class="section" id="sec3" data-etapa="idear">
+
+    <div class="etapa-header">
+      <div class="etapa-badge">
+        <div class="etapa-circle">💡</div>
+        <div class="etapa-num">03 / 05</div>
+      </div>
+      <div class="etapa-title-block">
+        <div class="etapa-tag">Idear</div>
+        <h2 class="etapa-title">Expandir antes<br><em>de decidir</em></h2>
+      </div>
+    </div>
+
+    <div class="explanation">
+      <div class="explanation-label">O que é esta etapa</div>
+      <p><strong>Agora é hora de pensar em formatos e caminhos possíveis.</strong> Mentoria individual? Grupo? Produto gravado? Atendimento de 4 sessões?</p>
+      <p>Aqui você expande, testa ideias, pensa em como resolver aquele problema de forma simples e funcional. <strong>Nada precisa ser perfeito.</strong> O objetivo é encontrar uma forma viável de começar.</p>
+    </div>
+
+    <div class="q-block">
+      <div class="q-label">Quais formatos você está considerando?</div>
+      <div class="q-sub">Pense livremente — mencoria individual, grupo, curso gravado, imersão, produto digital, atendimento avulso, etc. Sem filtros por enquanto.</div>
+      <textarea id="id_formatos" placeholder="Liste todos os formatos que vieram à mente, mesmo os que parecem inviáveis..." rows="5"></textarea>
+      <div class="autosave" id="as_id_formatos">✓ Salvo</div>
+    </div>
+
+    <div class="q-block">
+      <div class="q-label">Qual formato parece mais viável para começar?</div>
+      <div class="q-sub">Considerando onde você está agora — seu tempo, energia, estrutura e o que sua persona precisa — qual caminho faz mais sentido como primeiro passo?</div>
+      <textarea id="id_escolha" placeholder="Descreva o formato escolhido e por que ele faz sentido agora..." rows="4"></textarea>
+      <div class="autosave" id="as_id_escolha">✓ Salvo</div>
+    </div>
+
+    <div class="callout callout-bark">
+      <div class="callout-icon">🔁</div>
+      <div class="callout-text">
+        <strong>Lembre:</strong> você não está se comprometendo para sempre com esse formato. Está escolhendo um ponto de partida para testar. A versão final só existe depois da versão testada.
+      </div>
+    </div>
+
+    <div class="nav">
+      <button class="btn btn-ghost" onclick="goTo(2)">
+        <span class="arr-l arrow">←</span> Voltar
+      </button>
+      <button class="btn btn-primary" onclick="goTo(4)">
+        Ir para Prototipar <span class="arr-r arrow">→</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════
+       SECTION 4 — Prototipar
+  ══════════════════════════════════════════ -->
+  <div class="section" id="sec4" data-etapa="prototipar">
+
+    <div class="etapa-header">
+      <div class="etapa-badge">
+        <div class="etapa-circle">🛠</div>
+        <div class="etapa-num">04 / 05</div>
+      </div>
+      <div class="etapa-title-block">
+        <div class="etapa-tag">Prototipar</div>
+        <h2 class="etapa-title">Construir o<br><em>Produto Mínimo Viável</em></h2>
+      </div>
+    </div>
+
+    <div class="explanation">
+      <div class="explanation-label">O que é esta etapa</div>
+      <p><strong>Você não vai criar uma superprodução. Vai montar um MVP: seu Produto Mínimo Viável.</strong></p>
+      <p>Isso significa escolher um formato, definir o número de encontros ou módulos, criar uma proposta de valor clara e organizar os primeiros materiais de apoio. É hora de criar conteúdo, roteiros e materiais, coletar opiniões mantendo o foco na persona, colocar o protótipo em prática e <strong>estar pronto para ajustar</strong>.</p>
+    </div>
+
+    <div class="q-block">
+      <div class="q-label">Como seu produto vai funcionar?</div>
+      <div class="q-sub">Formato, número de encontros ou módulos, duração, canal de entrega (online, presencial, gravado).</div>
+      <textarea id="proto_formato" placeholder="Descreva como o produto vai funcionar na prática..." rows="4"></textarea>
+      <div class="autosave" id="as_proto_formato">✓ Salvo</div>
+    </div>
+
+    <div class="q-block">
+      <div class="q-label">Qual é a proposta de valor em uma frase?</div>
+      <div class="q-sub">O que seu produto entrega, para quem, e qual transformação ele promove.</div>
+      <textarea id="proto_promessa" placeholder="Escreva a proposta de valor clara e objetiva do seu produto..." rows="3"></textarea>
+      <div class="autosave" id="as_proto_promessa">✓ Salvo</div>
+    </div>
+
+    <div class="q-block">
+      <div class="q-label">Quais materiais de apoio você vai preparar?</div>
+      <div class="q-sub">Roteiros, formulários, PDFs, slides, vídeos — o que é necessário para o MVP funcionar?</div>
+      <textarea id="proto_materiais" placeholder="Liste os materiais que precisam ser criados para o primeiro ciclo..." rows="4"></textarea>
+      <div class="autosave" id="as_proto_materiais">✓ Salvo</div>
+    </div>
+
+    <div class="nav">
+      <button class="btn btn-ghost" onclick="goTo(3)">
+        <span class="arr-l arrow">←</span> Voltar
+      </button>
+      <button class="btn btn-primary" onclick="goTo(5)">
+        Ir para Testar <span class="arr-r arrow">→</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════
+       SECTION 5 — Testar
+  ══════════════════════════════════════════ -->
+  <div class="section" id="sec5" data-etapa="testar">
+
+    <div class="etapa-header">
+      <div class="etapa-badge">
+        <div class="etapa-circle">🚀</div>
+        <div class="etapa-num">05 / 05</div>
+      </div>
+      <div class="etapa-title-block">
+        <div class="etapa-tag">Testar</div>
+        <h2 class="etapa-title">Colocar no mundo<br><em>mesmo incompleto</em></h2>
+      </div>
+    </div>
+
+    <div class="explanation">
+      <div class="explanation-label">O que é esta etapa</div>
+      <p><strong>Essa fase é sobre colocar o produto no mundo, mesmo que de forma enxuta.</strong> Venda para 3 pessoas. Teste com sua comunidade. Conduza uma sessão.</p>
+      <p>Observe o que funciona, o que precisa ajustar, onde há dúvida ou travamento. <strong>A versão final só existe depois da versão testada.</strong> Não espere o "pronto" para lançar. O mercado responde quando você age. Autoridade se constrói fazendo.</p>
+    </div>
+
+    <div class="q-block">
+      <div class="q-label">Como você vai testar seu produto?</div>
+      <div class="q-sub">Quem são as primeiras pessoas, qual é o canal, qual é a proposta de teste.</div>
+      <textarea id="test_como" placeholder="Descreva o plano de teste: quem, quando, como e por onde..." rows="4"></textarea>
+      <div class="autosave" id="as_test_como">✓ Salvo</div>
+    </div>
+
+    <div class="q-block">
+      <div class="q-label">O que você vai observar durante o teste?</div>
+      <div class="q-sub">Quais indicadores vão mostrar que funcionou, que precisa ajuste, ou que revelou algo novo sobre a persona.</div>
+      <textarea id="test_observar" placeholder="O que você vai prestar atenção durante e depois do teste..." rows="4"></textarea>
+      <div class="autosave" id="as_test_observar">✓ Salvo</div>
+    </div>
+
+    <div class="q-block">
+      <div class="q-label">O que você ajustaria com base no teste? <span style="font-size:11px;opacity:0.4;font-style:italic;">(preencha após o teste)</span></div>
+      <div class="q-sub">Depois de conduzir o primeiro ciclo, registre os aprendizados e o que mudaria na próxima versão.</div>
+      <textarea id="test_aprendizado" placeholder="Preencha após o primeiro teste: o que funcionou, o que mudar..." rows="4"></textarea>
+      <div class="autosave" id="as_test_aprendizado">✓ Salvo</div>
+    </div>
+
+    <div class="callout callout-bark">
+      <div class="callout-icon">🌱</div>
+      <div class="callout-text">
+        <strong>Lembre:</strong> o mercado responde quando você age. Não espere ter certeza para começar — a certeza vem de fazer.
+      </div>
+    </div>
+
+    <div class="nav">
+      <button class="btn btn-ghost" onclick="goTo(4)">
+        <span class="arr-l arrow">←</span> Voltar
+      </button>
+      <button class="btn btn-dourado" onclick="goTo(6)">
+        Concluir ✓
+      </button>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════
+       SECTION 6 — Conclusão
+  ══════════════════════════════════════════ -->
+  <div class="section" id="sec6">
+    <div class="completion-wrap">
+      <div class="completion-icon">🌳</div>
+      <h2>Produto<br><em>mapeado</em></h2>
+      <p>Você percorreu as cinco etapas do Design Thinking e construiu a base do seu produto centrado na persona. Agora é hora de agir.</p>
+      <div class="completion-actions">
+        <button class="btn btn-dourado" onclick="exportPDF()" id="btnExport">
+          ↓ Exportar PDF completo
+        </button>
+        <div class="pdf-loading" id="pdfLoading">
+          <div class="spinner"></div> Gerando PDF...
+        </div>
+        <button class="btn btn-outline" onclick="goTo(0)">
+          ← Revisar etapas
+        </button>
+      </div>
+    </div>
+  </div>
+
+</div><!-- /page -->
+
+<script>
+// ─── Data map ────────────────────────────────────────────────────────────────
+const FIELDS = [
+  'em_pc','em_pb','em_pci',
+  'def_padroes','def_problema','def_reformulou',
+  'id_formatos','id_escolha',
+  'proto_formato','proto_promessa','proto_materiais',
+  'test_como','test_observar','test_aprendizado'
+];
+
+const ETAPA_SECTIONS = {
+  1: 'empatia', 2: 'definir', 3: 'idear', 4: 'prototipar', 5: 'testar'
+};
+
+const ETAPA_FIELDS = {
+  1: ['em_pc','em_pb','em_pci'],
+  2: ['def_padroes','def_problema','def_reformulou'],
+  3: ['id_formatos','id_escolha'],
+  4: ['proto_formato','proto_promessa','proto_materiais'],
+  5: ['test_como','test_observar','test_aprendizado']
+};
+
+const STORAGE_KEY = 'semente-dt';
+let currentSec = 0;
+let saveTimer = null;
+
+function loadData() {
+  try {
+    const d = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
+    FIELDS.forEach(id => {
+      const el = document.getElementById(id);
+      if (el && d[id]) el.value = d[id];
+    });
+    if (d.sec !== undefined) currentSec = d.sec;
+    updatePills();
+  } catch(e) {}
+}
+
+function saveData() {
+  const d = { sec: currentSec };
+  FIELDS.forEach(id => {
+    const el = document.getElementById(id);
+    if (el) d[id] = el.value;
+  });
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(d));
+}
+
+function autosave(fieldId) {
+  clearTimeout(saveTimer);
+  saveTimer = setTimeout(() => {
+    saveData();
+    const as = document.getElementById('as_' + fieldId);
+    if (as) {
+      as.classList.add('show');
+      setTimeout(() => as.classList.remove('show'), 1800);
+    }
+    updatePills();
+  }, 700);
+}
+
+// Wire up all textareas
+FIELDS.forEach(id => {
+  const el = document.getElementById(id);
+  if (el) el.addEventListener('input', () => autosave(id));
+});
+
+// ─── Navigation ──────────────────────────────────────────────────────────────
+function goTo(n) {
+  saveData();
+  document.getElementById('sec' + currentSec).classList.remove('active');
+  currentSec = n;
+  const target = document.getElementById('sec' + n);
+  target.classList.add('active');
+  updateProgress();
+  updatePills();
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+  saveData();
+}
+
+function updateProgress() {
+  for (let i = 0; i <= 6; i++) {
+    const seg = document.getElementById('seg' + i);
+    if (!seg) continue;
+    seg.classList.remove('done', 'active');
+    if (i < currentSec) seg.classList.add('done');
+    else if (i === currentSec) seg.classList.add('active');
+  }
+}
+
+function updatePills() {
+  Object.entries(ETAPA_FIELDS).forEach(([sec, fields]) => {
+    const key = ETAPA_SECTIONS[sec];
+    const pill = document.getElementById('pill-' + key);
+    if (!pill) return;
+    const anyFilled = fields.some(id => {
+      const el = document.getElementById(id);
+      return el && el.value.trim().length > 0;
+    });
+    pill.classList.toggle('done', anyFilled);
+  });
+}
+
+// ─── PDF Export ──────────────────────────────────────────────────────────────
+async function exportPDF() {
+  const btn = document.getElementById('btnExport');
+  const loading = document.getElementById('pdfLoading');
+  btn.style.display = 'none';
+  loading.classList.add('show');
+  await new Promise(r => setTimeout(r, 80));
+
+  try {
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF({ orientation: 'p', unit: 'mm', format: 'a4' });
+    const W = 210, mL = 22, mR = 22, cW = W - mL - mR;
+    let y = 0;
+
+    const C = {
+      creme: [245,240,232], bark: [61,46,30], dourado: [184,146,90],
+      rose: [201,137,122], verde: [90,122,90], areia: [221,208,188],
+      white: [255,255,255], lilac: [122,106,154], teal: [106,138,122]
+    };
+
+    const EC = {
+      empatia: C.dourado, definir: C.verde, idear: C.rose,
+      prototipar: C.lilac, testar: C.teal
+    };
+
+    const sf = c => doc.setFillColor(c[0],c[1],c[2]);
+    const sd = c => doc.setDrawColor(c[0],c[1],c[2]);
+    const st = c => doc.setTextColor(c[0],c[1],c[2]);
+
+    function newPage() {
+      doc.addPage();
+      sf(C.creme); doc.rect(0,0,W,297,'F');
+      y = 24;
+    }
+
+    function checkY(need=20) {
+      if (y + need > 272) newPage();
+    }
+
+    function drawSection(etapaKey, etapaLabel, icon, questions) {
+      const ec = EC[etapaKey];
+      newPage();
+
+      // Etapa accent bar
+      sf(ec); doc.rect(0, 0, W, 2, 'F');
+
+      // Header
+      st(ec); doc.setFontSize(8); doc.setFont('helvetica','normal');
+      doc.text(etapaLabel.toUpperCase(), mL, y);
+      y += 10;
+
+      st(C.bark); doc.setFontSize(22); doc.setFont('helvetica','bold');
+      doc.text(icon + '  ' + etapaLabel, mL, y);
+      y += 16;
+
+      questions.forEach(q => {
+        const val = q.value.trim();
+        const titleLines = doc.splitTextToSize(q.label, cW - 8);
+        const answerLines = doc.splitTextToSize(val || 'Não respondida.', cW - 14);
+        const blockH = titleLines.length * 6 + (q.sub ? 6 : 0) + answerLines.length * 5.5 + 20;
+
+        checkY(blockH + 6);
+
+        // Card
+        sf(C.white); doc.roundedRect(mL, y, cW, blockH, 1,1,'F');
+        sd(C.areia); doc.setLineWidth(0.3); doc.roundedRect(mL,y,cW,blockH,1,1,'S');
+        sf(ec); doc.rect(mL, y, 24, 1.5, 'F');
+
+        y += 9;
+
+        // Title
+        st(C.bark); doc.setFontSize(12); doc.setFont('helvetica','bold');
+        doc.text(titleLines, mL+6, y);
+        y += titleLines.length * 6;
+
+        // Sub
+        if (q.sub) {
+          const subLines = doc.splitTextToSize(q.sub, cW - 14);
+          st(C.bark); doc.setFontSize(8.5); doc.setFont('helvetica','italic');
+          doc.setGState(new doc.GState({opacity:0.5}));
+          doc.text(subLines, mL+6, y);
+          doc.setGState(new doc.GState({opacity:1}));
+          y += 6;
+        }
+
+        // Answer
+        sf(val ? [248,245,240] : [250,248,244]);
+        doc.roundedRect(mL+6, y, cW-12, answerLines.length*5.5+8, 0.5,0.5,'F');
+        st(val ? C.bark : C.areia); doc.setFontSize(10);
+        doc.setFont('helvetica', val ? 'normal' : 'italic');
+        if (!val) doc.setGState(new doc.GState({opacity:0.5}));
+        doc.text(answerLines, mL+10, y+6);
+        doc.setGState(new doc.GState({opacity:1}));
+        y += answerLines.length * 5.5 + 14;
+      });
+    }
+
+    // ── Capa ──
+    sf(C.creme); doc.rect(0,0,W,297,'F');
+
+    // Rainbow top bar
+    const barW = W / 5;
+    [[0,C.dourado],[1,C.verde],[2,C.rose],[3,C.lilac],[4,C.teal]].forEach(([i,c]) => {
+      sf(c); doc.rect(i*barW, 0, barW, 4, 'F');
+    });
+
+    // Big decorative text
+    st([221,208,188]); doc.setFontSize(130); doc.setFont('helvetica','normal');
+    doc.text('DT', W-18, 110, {align:'right'});
+
+    st(C.dourado); doc.setFontSize(9); doc.setFont('helvetica','normal');
+    doc.text('4º ENCONTRO · SEMENTE', mL, 54);
+
+    st(C.bark); doc.setFontSize(36); doc.setFont('helvetica','bold');
+    doc.text('Design', mL, 73);
+    st(C.dourado); doc.setFontSize(36);
+    doc.text('Thinking', mL, 87);
+
+    st(C.bark); doc.setFontSize(11); doc.setFont('helvetica','normal');
+    doc.setGState(new doc.GState({opacity:0.55}));
+    const sub = doc.splitTextToSize('Cinco etapas para construir um produto que nasce do que sua persona precisa — não do que você quer ensinar.', cW);
+    doc.text(sub, mL, 102);
+    doc.setGState(new doc.GState({opacity:1}));
+
+    // 5 etapas strip on cover
+    const etapas = [
+      {label:'Empatizar', c:C.dourado},
+      {label:'Definir', c:C.verde},
+      {label:'Idear', c:C.rose},
+      {label:'Prototipar', c:C.lilac},
+      {label:'Testar', c:C.teal},
+    ];
+    let ex = mL;
+    const ew = (cW - 16) / 5;
+    etapas.forEach((e, i) => {
+      sf(e.c); doc.roundedRect(ex, 126, ew, 16, 1,1,'F');
+      st(C.white); doc.setFontSize(8); doc.setFont('helvetica','bold');
+      doc.text(e.label, ex + ew/2, 137, {align:'center'});
+      ex += ew + 4;
+    });
+
+    sd(C.areia); doc.setLineWidth(0.4); doc.line(mL, 154, W-mR, 154);
+
+    const dateStr = new Date().toLocaleDateString('pt-BR', {day:'2-digit',month:'long',year:'numeric'});
+    st(C.bark); doc.setFontSize(9); doc.setGState(new doc.GState({opacity:0.4}));
+    doc.text(dateStr.toUpperCase(), mL, 163);
+    doc.setGState(new doc.GState({opacity:1}));
+
+    sf(C.bark); doc.rect(0,274,W,23,'F');
+    st(C.creme); doc.setFontSize(8); doc.setGState(new doc.GState({opacity:0.55}));
+    doc.text('Semente — Transformação em Movimento', mL, 288);
+    doc.setGState(new doc.GState({opacity:1}));
+
+    // ── Etapas ──
+    const get = id => document.getElementById(id)?.value || '';
+
+    drawSection('empatia', 'Empatizar', '🔍', [
+      { label: 'PC — Pesquisa de Campo / Concorrentes', sub: 'O que o mercado já entrega? Onde estão os GAPs?', value: get('em_pc') },
+      { label: 'PB — Pesquisa em Buscadores', sub: 'O que sua persona pesquisa no Google e nas redes sociais?', value: get('em_pb') },
+      { label: 'PCI — Pesquisa com Clientes', sub: 'Conversas reais, falas, feedbacks — com as palavras dela.', value: get('em_pci') },
+    ]);
+
+    drawSection('definir', 'Definir', '🎯', [
+      { label: 'Quais padrões você identificou na pesquisa?', sub: 'O que se repetiu nas três fontes? Onde as dores se cruzam?', value: get('def_padroes') },
+      { label: 'Qual é o problema central da sua persona?', sub: 'Em uma frase clara e específica.', value: get('def_problema') },
+      { label: 'Precisou reformular algo que acreditava antes?', sub: 'O que mudou ou foi confirmado depois da fase de empatia?', value: get('def_reformulou') },
+    ]);
+
+    drawSection('idear', 'Idear', '💡', [
+      { label: 'Quais formatos você está considerando?', sub: 'Lista livre de possibilidades, sem filtros.', value: get('id_formatos') },
+      { label: 'Qual formato parece mais viável para começar?', sub: 'Considerando seu tempo, energia e estrutura atual.', value: get('id_escolha') },
+    ]);
+
+    drawSection('prototipar', 'Prototipar', '🛠', [
+      { label: 'Como seu produto vai funcionar?', sub: 'Formato, encontros, duração, canal de entrega.', value: get('proto_formato') },
+      { label: 'Qual é a proposta de valor em uma frase?', sub: 'O que entrega, para quem, qual transformação promove.', value: get('proto_promessa') },
+      { label: 'Quais materiais de apoio você vai preparar?', sub: 'Roteiros, PDFs, slides — o necessário para o MVP funcionar.', value: get('proto_materiais') },
+    ]);
+
+    drawSection('testar', 'Testar', '🚀', [
+      { label: 'Como você vai testar seu produto?', sub: 'Quem, quando, como e por onde.', value: get('test_como') },
+      { label: 'O que você vai observar durante o teste?', sub: 'Indicadores de que funcionou ou precisa de ajuste.', value: get('test_observar') },
+      { label: 'O que você ajustaria com base no teste?', sub: 'Preencher após o primeiro ciclo de teste.', value: get('test_aprendizado') },
+    ]);
+
+    // ── Page numbers ──
+    const total = doc.internal.getNumberOfPages();
+    for (let p=1; p<=total; p++) {
+      doc.setPage(p);
+      if (p===1) continue;
+      st(C.bark); doc.setFontSize(8); doc.setFont('helvetica','normal');
+      doc.setGState(new doc.GState({opacity:0.3}));
+      doc.text(`${p-1}`, W/2, 290, {align:'center'});
+      doc.setGState(new doc.GState({opacity:1}));
+    }
+
+    doc.save('semente-design-thinking.pdf');
+
+  } catch(err) {
+    console.error(err);
+    alert('Erro ao gerar PDF. Tente novamente.');
+  }
+
+  btn.style.display = 'inline-flex';
+  loading.classList.remove('show');
+}
+
+// ─── Init ────────────────────────────────────────────────────────────────────
+loadData();
+goTo(currentSec);
+</script>
+</body>
+</html>
