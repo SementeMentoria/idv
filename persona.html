@@ -1,0 +1,1119 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mapeamento de Persona — Semente</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;1,300;1,400&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<style>
+  :root {
+    --creme: #F5F0E8;
+    --bark: #3D2E1E;
+    --dourado: #B8925A;
+    --rose: #C9897A;
+    --verde: #5A7A5A;
+    --areia: #DDD0BC;
+    --areia-escura: #C8B89A;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--creme);
+    color: var(--bark);
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* Grain texture overlay */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E");
+    pointer-events: none;
+    z-index: 0;
+    opacity: 0.4;
+  }
+
+  .container {
+    max-width: 680px;
+    margin: 0 auto;
+    padding: 48px 24px 80px;
+    position: relative;
+    z-index: 1;
+  }
+
+  /* Header */
+  .header {
+    text-align: center;
+    margin-bottom: 56px;
+    animation: fadeDown 0.8s ease both;
+  }
+
+  .header-eyebrow {
+    font-family: 'DM Sans', sans-serif;
+    font-size: 11px;
+    font-weight: 500;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--dourado);
+    margin-bottom: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+  }
+
+  .header-eyebrow::before,
+  .header-eyebrow::after {
+    content: '';
+    width: 32px;
+    height: 1px;
+    background: var(--dourado);
+    opacity: 0.5;
+  }
+
+  .header h1 {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: clamp(36px, 6vw, 52px);
+    font-weight: 300;
+    line-height: 1.1;
+    color: var(--bark);
+    letter-spacing: -0.01em;
+  }
+
+  .header h1 em {
+    font-style: italic;
+    color: var(--dourado);
+  }
+
+  .header-subtitle {
+    margin-top: 16px;
+    font-size: 14px;
+    font-weight: 300;
+    color: var(--bark);
+    opacity: 0.65;
+    line-height: 1.6;
+    max-width: 440px;
+    margin-left: auto;
+    margin-right: auto;
+  }
+
+  /* Progress bar */
+  .progress-wrap {
+    margin-bottom: 40px;
+    animation: fadeUp 0.6s 0.2s ease both;
+  }
+
+  .progress-meta {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+  }
+
+  .progress-label {
+    font-size: 12px;
+    font-weight: 500;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--bark);
+    opacity: 0.5;
+  }
+
+  .progress-count {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 22px;
+    font-weight: 400;
+    color: var(--dourado);
+  }
+
+  .progress-count span {
+    font-size: 14px;
+    color: var(--bark);
+    opacity: 0.4;
+    font-family: 'DM Sans', sans-serif;
+  }
+
+  .progress-bar {
+    height: 2px;
+    background: var(--areia);
+    border-radius: 2px;
+    overflow: hidden;
+  }
+
+  .progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--dourado), var(--rose));
+    border-radius: 2px;
+    transition: width 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  /* Card */
+  .card {
+    background: white;
+    border-radius: 2px;
+    border: 1px solid var(--areia);
+    padding: 44px 44px 36px;
+    position: relative;
+    animation: fadeUp 0.5s ease both;
+    box-shadow: 0 2px 24px rgba(61, 46, 30, 0.06);
+  }
+
+  @media (max-width: 480px) {
+    .card { padding: 32px 24px 28px; }
+  }
+
+  /* Card accent line */
+  .card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 44px;
+    right: 44px;
+    height: 2px;
+    background: linear-gradient(90deg, var(--dourado), transparent);
+  }
+
+  .card-number {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 72px;
+    font-weight: 300;
+    color: var(--areia);
+    line-height: 1;
+    position: absolute;
+    top: 28px;
+    right: 40px;
+    letter-spacing: -0.03em;
+    user-select: none;
+  }
+
+  .card-category {
+    font-size: 10px;
+    font-weight: 500;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--rose);
+    margin-bottom: 12px;
+  }
+
+  .card-title {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: clamp(26px, 4vw, 34px);
+    font-weight: 400;
+    line-height: 1.2;
+    color: var(--bark);
+    margin-bottom: 16px;
+    padding-right: 60px;
+  }
+
+  .card-description {
+    font-size: 13.5px;
+    font-weight: 300;
+    line-height: 1.7;
+    color: var(--bark);
+    opacity: 0.65;
+    margin-bottom: 32px;
+    padding-right: 20px;
+    border-left: 2px solid var(--areia);
+    padding-left: 14px;
+  }
+
+  .prompt-label {
+    font-size: 11px;
+    font-weight: 500;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--bark);
+    opacity: 0.5;
+    margin-bottom: 10px;
+  }
+
+  textarea {
+    width: 100%;
+    min-height: 140px;
+    background: var(--creme);
+    border: 1px solid var(--areia);
+    border-radius: 2px;
+    padding: 16px 18px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 14.5px;
+    font-weight: 300;
+    line-height: 1.75;
+    color: var(--bark);
+    resize: vertical;
+    transition: border-color 0.2s, box-shadow 0.2s;
+    outline: none;
+  }
+
+  textarea::placeholder {
+    color: var(--bark);
+    opacity: 0.3;
+    font-style: italic;
+  }
+
+  textarea:focus {
+    border-color: var(--dourado);
+    box-shadow: 0 0 0 3px rgba(184, 146, 90, 0.1);
+  }
+
+  /* Autosave indicator */
+  .autosave {
+    font-size: 11px;
+    color: var(--verde);
+    opacity: 0;
+    text-align: right;
+    margin-top: 8px;
+    letter-spacing: 0.05em;
+    transition: opacity 0.3s;
+    height: 16px;
+  }
+
+  .autosave.visible { opacity: 1; }
+
+  /* Navigation */
+  .nav {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 32px;
+    padding-top: 28px;
+    border-top: 1px solid var(--areia);
+  }
+
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 13px;
+    font-weight: 500;
+    letter-spacing: 0.06em;
+    padding: 12px 24px;
+    border-radius: 2px;
+    border: none;
+    cursor: pointer;
+    transition: all 0.2s;
+    text-decoration: none;
+  }
+
+  .btn-ghost {
+    background: transparent;
+    color: var(--bark);
+    opacity: 0.5;
+    padding-left: 0;
+  }
+
+  .btn-ghost:hover { opacity: 1; }
+
+  .btn-primary {
+    background: var(--bark);
+    color: var(--creme);
+  }
+
+  .btn-primary:hover {
+    background: #2A1F14;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 16px rgba(61, 46, 30, 0.2);
+  }
+
+  .btn-primary:disabled {
+    opacity: 0.3;
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
+  }
+
+  .btn-dourado {
+    background: var(--dourado);
+    color: white;
+  }
+
+  .btn-dourado:hover {
+    background: #A07840;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 16px rgba(184, 146, 90, 0.3);
+  }
+
+  .arrow {
+    font-size: 16px;
+    transition: transform 0.2s;
+  }
+
+  .btn-primary:hover .arrow { transform: translateX(3px); }
+  .btn-ghost:hover .arrow-back { transform: translateX(-3px); }
+
+  /* Dots navigation */
+  .dots {
+    display: flex;
+    gap: 6px;
+    align-items: center;
+  }
+
+  .dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--areia);
+    cursor: pointer;
+    transition: all 0.2s;
+    border: none;
+    padding: 0;
+  }
+
+  .dot.active {
+    background: var(--dourado);
+    transform: scale(1.3);
+  }
+
+  .dot.filled {
+    background: var(--areia-escura);
+  }
+
+  /* Completion screen */
+  .completion {
+    text-align: center;
+    padding: 60px 44px;
+    display: none;
+  }
+
+  .completion.active { display: block; }
+
+  .completion-icon {
+    width: 72px;
+    height: 72px;
+    margin: 0 auto 32px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--dourado), var(--rose));
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 28px;
+  }
+
+  .completion h2 {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 38px;
+    font-weight: 300;
+    margin-bottom: 16px;
+    line-height: 1.2;
+  }
+
+  .completion h2 em {
+    font-style: italic;
+    color: var(--dourado);
+  }
+
+  .completion p {
+    font-size: 14px;
+    font-weight: 300;
+    line-height: 1.7;
+    opacity: 0.65;
+    max-width: 380px;
+    margin: 0 auto 40px;
+  }
+
+  .completion-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    align-items: center;
+  }
+
+  .btn-outline {
+    background: transparent;
+    border: 1px solid var(--areia-escura);
+    color: var(--bark);
+    opacity: 0.7;
+  }
+
+  .btn-outline:hover {
+    opacity: 1;
+    border-color: var(--bark);
+  }
+
+  /* PDF loading */
+  .pdf-loading {
+    display: none;
+    align-items: center;
+    gap: 10px;
+    font-size: 13px;
+    color: var(--dourado);
+  }
+
+  .pdf-loading.active { display: flex; }
+
+  .spinner {
+    width: 16px;
+    height: 16px;
+    border: 2px solid var(--areia);
+    border-top-color: var(--dourado);
+    border-radius: 50%;
+    animation: spin 0.7s linear infinite;
+  }
+
+  /* Animations */
+  @keyframes fadeDown {
+    from { opacity: 0; transform: translateY(-20px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  @keyframes spin {
+    to { transform: rotate(360deg); }
+  }
+
+  .slide-in {
+    animation: fadeUp 0.4s ease both;
+  }
+
+  /* Step indicator pills (mobile-friendly overview) */
+  .step-pills {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    justify-content: center;
+    margin-bottom: 28px;
+    animation: fadeUp 0.6s 0.1s ease both;
+  }
+
+  .pill {
+    font-size: 10px;
+    padding: 4px 10px;
+    border-radius: 20px;
+    background: var(--areia);
+    color: var(--bark);
+    opacity: 0.5;
+    font-weight: 500;
+    letter-spacing: 0.05em;
+    cursor: pointer;
+    transition: all 0.2s;
+    border: none;
+  }
+
+  .pill.active {
+    background: var(--dourado);
+    color: white;
+    opacity: 1;
+  }
+
+  .pill.done {
+    background: var(--areia-escura);
+    opacity: 0.8;
+  }
+
+  @media (max-width: 480px) {
+    .step-pills { display: none; }
+    .card-number { font-size: 48px; top: 20px; right: 24px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="container">
+  <div class="header">
+    <div class="header-eyebrow">3º Encontro · Semente</div>
+    <h1>Mapeamento de<br><em>Persona</em></h1>
+    <p class="header-subtitle">Conheça profundamente quem você serve — seus desejos, medos, crenças e o que realmente a move.</p>
+  </div>
+
+  <div class="progress-wrap">
+    <div class="progress-meta">
+      <span class="progress-label">Progresso</span>
+      <span class="progress-count" id="progressCount">1 <span>/ 15</span></span>
+    </div>
+    <div class="progress-bar">
+      <div class="progress-fill" id="progressFill" style="width: 6.67%"></div>
+    </div>
+  </div>
+
+  <div class="step-pills" id="stepPills"></div>
+
+  <div class="card" id="mainCard">
+    <div class="card-number" id="cardNumber">01</div>
+    <div class="card-category" id="cardCategory"></div>
+    <div class="card-title" id="cardTitle"></div>
+    <div class="card-description" id="cardDescription"></div>
+    <div class="prompt-label">Sua resposta</div>
+    <textarea id="answerField" placeholder="Escreva livremente..." rows="5"></textarea>
+    <div class="autosave" id="autosave">✓ Salvo automaticamente</div>
+
+    <div class="nav">
+      <button class="btn btn-ghost" id="btnBack" onclick="navigate(-1)">
+        <span class="arrow-back">←</span> Anterior
+      </button>
+      <div class="dots" id="dotsNav"></div>
+      <button class="btn btn-primary" id="btnNext" onclick="navigate(1)">
+        Próxima <span class="arrow">→</span>
+      </button>
+    </div>
+  </div>
+
+  <div class="card completion" id="completionCard">
+    <div class="completion-icon">🌱</div>
+    <h2>Persona<br><em>mapeada</em></h2>
+    <p>Você completou o mapeamento das 15 dimensões da sua persona ideal. Esse é um ativo estratégico poderoso para o seu negócio.</p>
+    <div class="completion-actions">
+      <button class="btn btn-dourado" onclick="exportPDF()" id="btnExport">
+        ↓ Exportar PDF completo
+      </button>
+      <div class="pdf-loading" id="pdfLoading">
+        <div class="spinner"></div> Gerando PDF...
+      </div>
+      <button class="btn btn-outline btn-ghost" onclick="goToStep(0)">
+        ← Revisar respostas
+      </button>
+    </div>
+  </div>
+</div>
+
+<script>
+const STEPS = [
+  {
+    category: "Psicologia Emocional",
+    title: "Desejos",
+    description: "O que ela mais quer conquistar, sentir ou ter? Vá além do óbvio — inclua desejos profundos, não apenas os que ela verbaliza.",
+    placeholder: "O que sua persona deseja profundamente, mesmo que não diga em voz alta?"
+  },
+  {
+    category: "Psicologia Emocional",
+    title: "Medos",
+    description: "O que ela teme que aconteça ou não aconteça? Medos de fracasso, julgamento, perda, invisibilidade — o que a paralisa.",
+    placeholder: "Quais medos guiam (ou travam) as decisões dela?"
+  },
+  {
+    category: "Sistema de Crenças",
+    title: "Crenças de vida",
+    description: "Quais verdades ela carrega sobre si mesma, o mundo e o que é possível para ela? Crenças que moldam tudo que ela faz.",
+    placeholder: "O que ela acredita ser verdade sobre si mesma e sobre a vida?"
+  },
+  {
+    category: "Sistema de Crenças",
+    title: "Atitudes contraditórias",
+    description: "Onde ela diz uma coisa e faz outra? Os pontos de contradição revelam onde a transformação é mais necessária e mais resistida.",
+    placeholder: "Onde ela se contradiz — o que diz que quer, mas os comportamentos mostram o contrário?"
+  },
+  {
+    category: "Contexto & Urgência",
+    title: "Necessidades urgentes",
+    description: "O que ela precisa resolver agora — não amanhã. A dor que está no pico, que a fez buscar uma solução hoje.",
+    placeholder: "O que está em chamas na vida dela neste momento?"
+  },
+  {
+    category: "Contexto & Urgência",
+    title: "O que ela já fez de errado",
+    description: "Tentativas anteriores que não funcionaram, atalhos que buscou, soluções que decepcionaram. Esse histórico molda a desconfiança dela.",
+    placeholder: "Que soluções ela já tentou antes de chegar até você, e por que não funcionaram?"
+  },
+  {
+    category: "Autopercepção",
+    title: "Como ela se vê",
+    description: "A narrativa interna dela sobre si mesma — sua identidade, seu valor, seu lugar no mundo. Essa história guia cada escolha.",
+    placeholder: "Se ela te contasse quem ela é, o que diria sobre si mesma?"
+  },
+  {
+    category: "Autopercepção",
+    title: "Como as pessoas a veem",
+    description: "A percepção externa — família, clientes, colegas. Pode ser completamente diferente de como ela se vê internamente.",
+    placeholder: "O que as pessoas ao redor dela diriam sobre quem ela é?"
+  },
+  {
+    category: "Autopercepção",
+    title: "Como ela gostaria de ser vista",
+    description: "A identidade desejada, a imagem que ela quer projetar. A distância entre isso e a realidade é onde mora a transformação.",
+    placeholder: "Qual é a versão dela que ela mais quer que o mundo enxergue?"
+  },
+  {
+    category: "Ponto Cego",
+    title: "O que ela ainda não viu que a impede",
+    description: "O bloqueio invisível. O padrão que ela repete sem perceber, a crença que ela não questiona, o hábito que sabota tudo.",
+    placeholder: "O que você enxerga nela que ela ainda não consegue ver em si mesma?"
+  },
+  {
+    category: "Ponto Cego",
+    title: "O que ela suspeita sobre si mesma",
+    description: "A intuição que ela tem mas não verbaliza. Aquela voz que aparece às 3 da manhã — o que ela suspeita ser verdade, mas tem medo de confirmar.",
+    placeholder: "O que ela já sente, em algum nível, mas ainda não se permitiu admitir completamente?"
+  },
+  {
+    category: "Relação com Você",
+    title: "O que a faria confiar em você",
+    description: "Os elementos de autoridade, prova e conexão que ela precisa sentir para baixar a guarda e acreditar que você pode ajudá-la.",
+    placeholder: "O que você precisaria mostrar, dizer ou ser para ela confiar plenamente no seu trabalho?"
+  },
+  {
+    category: "Relação com Você",
+    title: "O que ela valoriza num processo de transformação",
+    description: "Como ela quer ser conduzida — com estrutura ou liberdade, com suavidade ou provocação, em grupo ou individualmente.",
+    placeholder: "O que torna uma experiência de transformação ideal para ela — o método, o ritmo, o estilo?"
+  },
+  {
+    category: "Resultado & Objeções",
+    title: "O resultado que provaria que deu certo",
+    description: "O marcador de sucesso dela — concreto ou emocional. O que ela vai sentir, ter ou ser quando souber que valeu a pena.",
+    placeholder: "Qual seria a cena, a sensação ou o número que provaria para ela que a transformação aconteceu?"
+  },
+  {
+    category: "Resultado & Objeções",
+    title: "Objeções ao que você vende",
+    description: "As razões que ela usa para não comprar — preço, tempo, dúvida sobre si mesma ou sobre você. Cada objeção é uma necessidade disfarçada.",
+    placeholder: "O que ela diz (ou pensa) para justificar não avançar? O que a faz hesitar?"
+  }
+];
+
+let current = 0;
+let answers = {};
+let autosaveTimer = null;
+
+function init() {
+  // Load from localStorage
+  const saved = localStorage.getItem('semente-persona-answers');
+  if (saved) {
+    try { answers = JSON.parse(saved); } catch(e) {}
+  }
+
+  const savedStep = localStorage.getItem('semente-persona-step');
+  if (savedStep !== null) {
+    current = Math.min(parseInt(savedStep), STEPS.length - 1);
+  }
+
+  buildPills();
+  buildDots();
+  renderStep();
+}
+
+function buildPills() {
+  const container = document.getElementById('stepPills');
+  STEPS.forEach((step, i) => {
+    const pill = document.createElement('button');
+    pill.className = 'pill';
+    pill.textContent = step.title;
+    pill.onclick = () => goToStep(i);
+    container.appendChild(pill);
+  });
+}
+
+function buildDots() {
+  const container = document.getElementById('dotsNav');
+  const total = STEPS.length;
+  const visible = 7;
+  const half = Math.floor(visible / 2);
+
+  let start = Math.max(0, current - half);
+  let end = Math.min(total - 1, start + visible - 1);
+  if (end - start < visible - 1) start = Math.max(0, end - visible + 1);
+
+  container.innerHTML = '';
+  for (let i = start; i <= end; i++) {
+    const dot = document.createElement('button');
+    dot.className = 'dot' + (i === current ? ' active' : (answers[i] ? ' filled' : ''));
+    dot.onclick = ((idx) => () => goToStep(idx))(i);
+    container.appendChild(dot);
+  }
+}
+
+function updatePills() {
+  const pills = document.querySelectorAll('.pill');
+  pills.forEach((pill, i) => {
+    pill.className = 'pill' + (i === current ? ' active' : (answers[i] ? ' done' : ''));
+  });
+}
+
+function renderStep() {
+  const step = STEPS[current];
+  const isLast = current === STEPS.length - 1;
+
+  document.getElementById('cardNumber').textContent = String(current + 1).padStart(2, '0');
+  document.getElementById('cardCategory').textContent = step.category;
+  document.getElementById('cardTitle').textContent = step.title;
+  document.getElementById('cardDescription').textContent = step.description;
+
+  const field = document.getElementById('answerField');
+  field.placeholder = step.placeholder;
+  field.value = answers[current] || '';
+
+  // Progress
+  const pct = ((current + 1) / STEPS.length) * 100;
+  document.getElementById('progressFill').style.width = pct + '%';
+  document.getElementById('progressCount').innerHTML = `${current + 1} <span>/ ${STEPS.length}</span>`;
+
+  // Buttons
+  const btnBack = document.getElementById('btnBack');
+  const btnNext = document.getElementById('btnNext');
+  btnBack.style.visibility = current === 0 ? 'hidden' : 'visible';
+
+  if (isLast) {
+    btnNext.innerHTML = 'Concluir <span class="arrow">✓</span>';
+  } else {
+    btnNext.innerHTML = 'Próxima <span class="arrow">→</span>';
+  }
+
+  // Show/hide autosave
+  document.getElementById('autosave').classList.remove('visible');
+
+  buildDots();
+  updatePills();
+
+  // Animate card
+  const card = document.getElementById('mainCard');
+  card.classList.remove('slide-in');
+  void card.offsetWidth;
+  card.classList.add('slide-in');
+
+  localStorage.setItem('semente-persona-step', current);
+}
+
+function saveCurrentAnswer() {
+  const val = document.getElementById('answerField').value.trim();
+  if (val) {
+    answers[current] = val;
+  } else {
+    delete answers[current];
+  }
+  localStorage.setItem('semente-persona-answers', JSON.stringify(answers));
+
+  // Show autosave
+  clearTimeout(autosaveTimer);
+  const indicator = document.getElementById('autosave');
+  indicator.classList.add('visible');
+  autosaveTimer = setTimeout(() => indicator.classList.remove('visible'), 2000);
+
+  updatePills();
+  buildDots();
+}
+
+document.getElementById('answerField').addEventListener('input', () => {
+  clearTimeout(autosaveTimer);
+  autosaveTimer = setTimeout(saveCurrentAnswer, 800);
+});
+
+function navigate(dir) {
+  saveCurrentAnswer();
+
+  if (dir === 1 && current === STEPS.length - 1) {
+    // Completion
+    document.getElementById('mainCard').style.display = 'none';
+    document.getElementById('completionCard').classList.add('active');
+    document.getElementById('progressFill').style.width = '100%';
+    document.getElementById('progressCount').innerHTML = `15 <span>/ 15</span>`;
+    return;
+  }
+
+  const next = current + dir;
+  if (next < 0 || next >= STEPS.length) return;
+  current = next;
+  renderStep();
+}
+
+function goToStep(i) {
+  saveCurrentAnswer();
+  document.getElementById('mainCard').style.display = 'block';
+  document.getElementById('completionCard').classList.remove('active');
+  current = i;
+  renderStep();
+}
+
+// ─── PDF Export ───────────────────────────────────────────────────────────────
+async function exportPDF() {
+  const btnExport = document.getElementById('btnExport');
+  const pdfLoading = document.getElementById('pdfLoading');
+  btnExport.style.display = 'none';
+  pdfLoading.classList.add('active');
+
+  await new Promise(r => setTimeout(r, 100));
+
+  try {
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF({ orientation: 'p', unit: 'mm', format: 'a4' });
+
+    const W = 210;
+    const marginL = 22;
+    const marginR = 22;
+    const contentW = W - marginL - marginR;
+    let y = 0;
+
+    // Color helpers
+    const C = {
+      creme: [245, 240, 232],
+      bark: [61, 46, 30],
+      dourado: [184, 146, 90],
+      rose: [201, 137, 122],
+      verde: [90, 122, 90],
+      areia: [221, 208, 188],
+      white: [255, 255, 255],
+    };
+
+    function setFill(c) { doc.setFillColor(c[0], c[1], c[2]); }
+    function setDraw(c) { doc.setDrawColor(c[0], c[1], c[2]); }
+    function setFont(c) { doc.setTextColor(c[0], c[1], c[2]); }
+
+    function checkPage(needed = 20) {
+      if (y + needed > 272) {
+        doc.addPage();
+        y = 20;
+      }
+    }
+
+    // ── Cover page ──
+    setFill(C.creme);
+    doc.rect(0, 0, W, 297, 'F');
+
+    // Top accent bar
+    setFill(C.dourado);
+    doc.rect(0, 0, W, 3, 'F');
+
+    // Large decorative number
+    doc.setFont('helvetica', 'normal');
+    setFont([221, 208, 188]);
+    doc.setFontSize(160);
+    doc.text('3', W - 28, 100, { align: 'right' });
+
+    // Eyebrow
+    setFont(C.dourado);
+    doc.setFontSize(9);
+    doc.setFont('helvetica', 'normal');
+    doc.text('3º ENCONTRO · SEMENTE', marginL, 52);
+
+    // Title
+    setFont(C.bark);
+    doc.setFontSize(38);
+    doc.setFont('helvetica', 'bold');
+    doc.text('Mapeamento de', marginL, 72);
+    setFont(C.dourado);
+    doc.setFontSize(38);
+    doc.text('Persona', marginL, 86);
+
+    // Subtitle
+    setFont(C.bark);
+    doc.setFontSize(11);
+    doc.setFont('helvetica', 'normal');
+    const subtitleLines = doc.splitTextToSize('15 dimensões do seu cliente ideal — desejos, medos, crenças e o que realmente a move.', contentW);
+    doc.setTextColor(61, 46, 30);
+    doc.setGState(new doc.GState({ opacity: 0.55 }));
+    doc.text(subtitleLines, marginL, 102);
+    doc.setGState(new doc.GState({ opacity: 1 }));
+
+    // Divider
+    setDraw(C.areia);
+    doc.setLineWidth(0.5);
+    doc.line(marginL, 120, W - marginR, 120);
+
+    // Date
+    const dateStr = new Date().toLocaleDateString('pt-BR', { day: '2-digit', month: 'long', year: 'numeric' });
+    setFont(C.bark);
+    doc.setFontSize(9);
+    doc.setGState(new doc.GState({ opacity: 0.45 }));
+    doc.text(dateStr.toUpperCase(), marginL, 130);
+    doc.setGState(new doc.GState({ opacity: 1 }));
+
+    // Bottom bar
+    setFill(C.bark);
+    doc.rect(0, 274, W, 23, 'F');
+    setFont(C.creme);
+    doc.setFontSize(8);
+    doc.setGState(new doc.GState({ opacity: 0.6 }));
+    doc.text('Semente — Transformação em Movimento', marginL, 288);
+    doc.setGState(new doc.GState({ opacity: 1 }));
+
+    // ── Content pages ──
+    const categories = {};
+    STEPS.forEach((step, i) => {
+      if (!categories[step.category]) categories[step.category] = [];
+      categories[step.category].push({ ...step, index: i });
+    });
+
+    for (const [catName, catSteps] of Object.entries(categories)) {
+      doc.addPage();
+      y = 0;
+
+      // Page top accent
+      setFill(C.creme);
+      doc.rect(0, 0, W, 297, 'F');
+      setFill(C.areia);
+      doc.rect(0, 0, W, 2, 'F');
+
+      y = 24;
+
+      // Category header
+      setFill(C.bark);
+      doc.rect(marginL, y, contentW, 1, 'F');
+      y += 6;
+      setFont(C.dourado);
+      doc.setFontSize(8);
+      doc.setFont('helvetica', 'normal');
+      doc.text(catName.toUpperCase(), marginL, y);
+      y += 16;
+
+      for (const step of catSteps) {
+        const answer = answers[step.index] || '';
+        const descLines = doc.splitTextToSize(step.description, contentW - 4);
+        const answerLines = answer
+          ? doc.splitTextToSize(answer, contentW - 8)
+          : doc.splitTextToSize('Não respondida.', contentW - 8);
+
+        const blockH = 12 + (descLines.length * 5.5) + 8 + (answerLines.length * 6.5) + 20;
+        checkPage(blockH);
+
+        // Card background
+        setFill(C.white);
+        doc.roundedRect(marginL, y, contentW, blockH - 4, 1, 1, 'F');
+        setDraw(C.areia);
+        doc.setLineWidth(0.3);
+        doc.roundedRect(marginL, y, contentW, blockH - 4, 1, 1, 'S');
+
+        // Top accent line
+        setFill(C.dourado);
+        doc.rect(marginL, y, 32, 1.5, 'F');
+
+        y += 10;
+
+        // Step number + title
+        setFont(C.areia);
+        doc.setFontSize(18);
+        doc.setFont('helvetica', 'bold');
+        doc.text(String(step.index + 1).padStart(2, '0'), W - marginR - 14, y + 2, { align: 'right' });
+
+        setFont(C.bark);
+        doc.setFontSize(15);
+        doc.setFont('helvetica', 'bold');
+        doc.text(step.title, marginL + 6, y + 2);
+        y += 10;
+
+        // Description
+        setFont(C.bark);
+        doc.setFontSize(9);
+        doc.setFont('helvetica', 'normal');
+        doc.setGState(new doc.GState({ opacity: 0.6 }));
+        doc.text(descLines, marginL + 10, y);
+        doc.setGState(new doc.GState({ opacity: 1 }));
+        y += descLines.length * 5.5 + 8;
+
+        // Answer section
+        setFill([248, 245, 240]);
+        doc.roundedRect(marginL + 6, y - 2, contentW - 12, answerLines.length * 6.5 + 8, 1, 1, 'F');
+
+        setFont(answer ? C.bark : C.areia);
+        doc.setFontSize(10);
+        doc.setFont('helvetica', answer ? 'normal' : 'italic');
+        if (!answer) doc.setGState(new doc.GState({ opacity: 0.5 }));
+        doc.text(answerLines, marginL + 10, y + 4);
+        doc.setGState(new doc.GState({ opacity: 1 }));
+
+        y += answerLines.length * 6.5 + 16;
+      }
+    }
+
+    // ── Final page: summary overview ──
+    doc.addPage();
+    setFill(C.creme);
+    doc.rect(0, 0, W, 297, 'F');
+    setFill(C.dourado);
+    doc.rect(0, 0, W, 2, 'F');
+
+    y = 28;
+    setFont(C.dourado);
+    doc.setFontSize(8);
+    doc.text('VISÃO GERAL', marginL, y);
+    y += 10;
+    setFont(C.bark);
+    doc.setFontSize(22);
+    doc.setFont('helvetica', 'bold');
+    doc.text('Perfil da Persona', marginL, y);
+    y += 16;
+
+    const answered = Object.keys(answers).length;
+    setFont(C.bark);
+    doc.setFontSize(10);
+    doc.setFont('helvetica', 'normal');
+    doc.setGState(new doc.GState({ opacity: 0.6 }));
+    doc.text(`${answered} de 15 dimensões respondidas`, marginL, y);
+    doc.setGState(new doc.GState({ opacity: 1 }));
+    y += 14;
+
+    // Mini grid of all 15
+    const cols = 3;
+    const cellW = contentW / cols - 2;
+    const cellH = 22;
+    const gapX = 3;
+
+    STEPS.forEach((step, i) => {
+      checkPage(cellH + 4);
+      const col = i % cols;
+      const x = marginL + col * (cellW + gapX);
+      if (col === 0 && i > 0) y += cellH + 4;
+
+      const hasAnswer = !!answers[i];
+      setFill(hasAnswer ? C.white : [248, 245, 240]);
+      doc.roundedRect(x, y, cellW, cellH, 1, 1, 'F');
+      setDraw(hasAnswer ? C.areia : [235, 228, 215]);
+      doc.setLineWidth(0.25);
+      doc.roundedRect(x, y, cellW, cellH, 1, 1, 'S');
+
+      if (hasAnswer) {
+        setFill(C.verde);
+        doc.circle(x + cellW - 6, y + 6, 2, 'F');
+      }
+
+      setFont(C.dourado);
+      doc.setFontSize(7);
+      doc.setFont('helvetica', 'normal');
+      doc.text(String(i + 1).padStart(2, '0'), x + 4, y + 8);
+
+      setFont(C.bark);
+      doc.setFontSize(8);
+      doc.setFont('helvetica', 'bold');
+      const titleLines = doc.splitTextToSize(step.title, cellW - 12);
+      doc.text(titleLines[0], x + 4, y + 15);
+    });
+
+    y += cellH + 20;
+    checkPage(30);
+
+    // Footer note
+    setDraw(C.areia);
+    doc.setLineWidth(0.5);
+    doc.line(marginL, y, W - marginR, y);
+    y += 10;
+    setFont(C.bark);
+    doc.setFontSize(9);
+    doc.setGState(new doc.GState({ opacity: 0.5 }));
+    const footerText = 'Este documento é confidencial e faz parte do processo Semente — Transformação em Movimento. Use-o como referência estratégica para comunicação, ofertas e posicionamento.';
+    const footerLines = doc.splitTextToSize(footerText, contentW);
+    doc.text(footerLines, marginL, y);
+    doc.setGState(new doc.GState({ opacity: 1 }));
+
+    // Page numbers
+    const pageCount = doc.internal.getNumberOfPages();
+    for (let p = 1; p <= pageCount; p++) {
+      doc.setPage(p);
+      if (p === 1) continue; // no number on cover
+      setFont(C.bark);
+      doc.setFontSize(8);
+      doc.setGState(new doc.GState({ opacity: 0.3 }));
+      doc.text(`${p - 1}`, W / 2, 290, { align: 'center' });
+      doc.setGState(new doc.GState({ opacity: 1 }));
+    }
+
+    doc.save('semente-persona.pdf');
+
+  } catch (err) {
+    console.error(err);
+    alert('Erro ao gerar PDF. Por favor, tente novamente.');
+  }
+
+  btnExport.style.display = 'inline-flex';
+  pdfLoading.classList.remove('active');
+}
+
+// Init
+init();
+</script>
+</body>
+</html>
