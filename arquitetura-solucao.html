@@ -1,0 +1,699 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Arquitetura da Solução — Semente</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;1,300;1,400&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<style>
+  :root {
+    --creme: #F5F0E8;
+    --bark: #3D2E1E;
+    --dourado: #B8925A;
+    --rose: #C9897A;
+    --verde: #5A7A5A;
+    --areia: #DDD0BC;
+    --areia-escura: #C8B89A;
+    --accent: #B8925A;
+    --accent-light: rgba(184,146,90,0.10);
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'DM Sans', sans-serif; background: var(--creme); color: var(--bark); min-height: 100vh; }
+  body::before { content: ''; position: fixed; inset: 0; background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E"); pointer-events: none; z-index: 0; opacity: 0.4; }
+
+  .page { max-width: 680px; margin: 0 auto; padding: 52px 24px 100px; position: relative; z-index: 1; }
+
+  .section { display: none; }
+  .section.active { display: block; animation: fadeUp 0.45s ease both; }
+
+  /* ── Header ── */
+  .header { text-align: center; margin-bottom: 52px; animation: fadeDown 0.7s ease both; }
+  .eyebrow { font-size: 10px; font-weight: 500; letter-spacing: 0.22em; text-transform: uppercase; color: var(--accent); display: flex; align-items: center; justify-content: center; gap: 10px; margin-bottom: 18px; }
+  .eyebrow::before, .eyebrow::after { content: ''; width: 28px; height: 1px; background: var(--accent); opacity: 0.5; }
+  .header h1 { font-family: 'Cormorant Garamond', serif; font-size: clamp(32px, 6vw, 50px); font-weight: 300; line-height: 1.1; letter-spacing: -0.01em; }
+  .header h1 em { font-style: italic; color: var(--accent); }
+  .header-sub { margin-top: 14px; font-size: 13.5px; font-weight: 300; opacity: 0.6; line-height: 1.65; max-width: 420px; margin-inline: auto; }
+
+  /* ── Progress ── */
+  .progress-wrap { margin-bottom: 40px; }
+  .progress-meta { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+  .progress-label { font-size: 11px; font-weight: 500; letter-spacing: 0.1em; text-transform: uppercase; opacity: 0.45; }
+  .progress-count { font-family: 'Cormorant Garamond', serif; font-size: 22px; color: var(--accent); }
+  .progress-count span { font-size: 13px; font-family: 'DM Sans', sans-serif; color: var(--bark); opacity: 0.4; }
+  .progress-bar { height: 2px; background: var(--areia); border-radius: 2px; overflow: hidden; }
+  .progress-fill { height: 100%; background: linear-gradient(90deg, var(--accent), var(--areia-escura)); border-radius: 2px; transition: width 0.5s cubic-bezier(0.4,0,0.2,1); }
+
+  /* ── Card ── */
+  .card { background: white; border: 1px solid var(--areia); border-radius: 2px; padding: 40px 44px 34px; position: relative; box-shadow: 0 2px 20px rgba(61,46,30,0.06); }
+  .card::before { content: ''; position: absolute; top: 0; left: 36px; right: 36px; height: 2px; background: linear-gradient(90deg, var(--accent), transparent); }
+  .card-num { font-family: 'Cormorant Garamond', serif; font-size: 68px; font-weight: 300; color: var(--areia); line-height: 1; position: absolute; top: 24px; right: 36px; letter-spacing: -0.03em; user-select: none; }
+  .card-tag { font-size: 10px; font-weight: 500; letter-spacing: 0.18em; text-transform: uppercase; color: var(--accent); margin-bottom: 10px; }
+  .card-title { font-family: 'Cormorant Garamond', serif; font-size: clamp(22px, 3.5vw, 30px); font-weight: 400; line-height: 1.25; margin-bottom: 16px; padding-right: 56px; }
+  .card-hint { font-size: 12.5px; font-weight: 300; opacity: 0.55; line-height: 1.65; margin-bottom: 20px; padding-left: 12px; border-left: 2px solid var(--areia); font-style: italic; }
+
+  .field-label { font-size: 11px; font-weight: 500; letter-spacing: 0.1em; text-transform: uppercase; opacity: 0.4; margin-bottom: 8px; }
+
+  textarea, input[type="text"] {
+    width: 100%; background: var(--creme); border: 1px solid var(--areia); border-radius: 2px;
+    padding: 13px 15px; font-family: 'DM Sans', sans-serif; font-size: 14px; font-weight: 300;
+    line-height: 1.75; color: var(--bark); outline: none;
+    transition: border-color 0.2s, box-shadow 0.2s;
+  }
+  textarea { resize: vertical; min-height: 100px; }
+  textarea::placeholder, input[type="text"]::placeholder { color: var(--bark); opacity: 0.28; font-style: italic; }
+  textarea:focus, input[type="text"]:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(184,146,90,0.12); }
+
+  .autosave { font-size: 10px; color: var(--verde); opacity: 0; text-align: right; margin-top: 5px; transition: opacity 0.3s; height: 14px; }
+  .autosave.show { opacity: 1; }
+
+  /* ── Etapas dinâmicas ── */
+  .etapas-list { display: flex; flex-direction: column; gap: 12px; margin-bottom: 16px; }
+
+  .etapa-item {
+    border: 1px solid var(--areia); border-radius: 2px; background: var(--creme);
+    padding: 16px 18px; position: relative;
+    animation: fadeUp 0.3s ease both;
+  }
+
+  .etapa-item::before {
+    content: '';
+    position: absolute; left: 0; top: 0; bottom: 0;
+    width: 3px; border-radius: 2px 0 0 2px;
+    background: var(--accent);
+    opacity: 0.5;
+  }
+
+  .etapa-header { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
+
+  .etapa-badge {
+    width: 24px; height: 24px; border-radius: 50%;
+    background: var(--accent); color: white;
+    font-size: 11px; font-weight: 500;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+  }
+
+  .etapa-nome {
+    flex: 1; background: transparent; border: none; border-bottom: 1px solid var(--areia);
+    border-radius: 0; padding: 4px 0; font-family: 'Cormorant Garamond', serif;
+    font-size: 17px; font-weight: 400; color: var(--bark);
+  }
+  .etapa-nome:focus { border-bottom-color: var(--accent); box-shadow: none; background: transparent; }
+  .etapa-nome::placeholder { opacity: 0.35; font-style: italic; }
+
+  .etapa-del {
+    background: none; border: none; cursor: pointer; color: var(--bark);
+    opacity: 0.25; font-size: 16px; padding: 2px 4px; transition: opacity 0.2s;
+    flex-shrink: 0;
+  }
+  .etapa-del:hover { opacity: 0.6; }
+
+  .etapa-desc { width: 100%; min-height: 70px; }
+
+  .btn-add {
+    display: flex; align-items: center; gap: 8px;
+    background: transparent; border: 1px dashed var(--areia-escura);
+    border-radius: 2px; padding: 10px 16px; cursor: pointer;
+    font-family: 'DM Sans', sans-serif; font-size: 12px; font-weight: 500;
+    letter-spacing: 0.06em; color: var(--bark); opacity: 0.5;
+    transition: all 0.2s; width: 100%;
+  }
+  .btn-add:hover { opacity: 1; border-color: var(--accent); color: var(--accent); }
+
+  /* ── Nav ── */
+  .nav { display: flex; justify-content: space-between; align-items: center; margin-top: 28px; padding-top: 24px; border-top: 1px solid var(--areia); }
+  .btn { display: inline-flex; align-items: center; gap: 8px; font-family: 'DM Sans', sans-serif; font-size: 13px; font-weight: 500; letter-spacing: 0.06em; padding: 12px 24px; border-radius: 2px; border: none; cursor: pointer; transition: all 0.2s; }
+  .btn-ghost { background: transparent; color: var(--bark); opacity: 0.45; padding-left: 0; }
+  .btn-ghost:hover { opacity: 1; }
+  .btn-primary { background: var(--bark); color: var(--creme); }
+  .btn-primary:hover { background: #2a1f14; transform: translateY(-1px); box-shadow: 0 4px 16px rgba(61,46,30,0.2); }
+  .btn-dourado { background: var(--accent); color: white; }
+  .btn-dourado:hover { background: #a07840; transform: translateY(-1px); box-shadow: 0 4px 16px rgba(184,146,90,0.35); }
+  .btn-outline { background: transparent; border: 1px solid var(--areia-escura); color: var(--bark); opacity: 0.7; }
+  .btn-outline:hover { opacity: 1; border-color: var(--bark); }
+  .arrow { transition: transform 0.2s; }
+  .btn-primary:hover .arr-r, .btn-dourado:hover .arr-r { transform: translateX(3px); }
+  .btn-ghost:hover .arr-l { transform: translateX(-3px); }
+
+  /* ── Canvas ── */
+  .canvas-wrap {
+    background: white; border: 1px solid var(--areia); border-radius: 2px;
+    padding: 40px 40px 36px; box-shadow: 0 2px 24px rgba(61,46,30,0.07);
+    position: relative; overflow: hidden;
+  }
+
+  .canvas-wrap::before {
+    content: '';
+    position: absolute; top: 0; left: 0; right: 0; height: 3px;
+    background: linear-gradient(90deg, var(--accent), var(--areia-escura), var(--accent));
+  }
+
+  .canvas-title {
+    text-align: center; margin-bottom: 32px;
+  }
+  .canvas-title .eyebrow-sm { font-size: 9px; font-weight: 500; letter-spacing: 0.2em; text-transform: uppercase; color: var(--accent); opacity: 0.7; margin-bottom: 8px; }
+  .canvas-title h2 { font-family: 'Cormorant Garamond', serif; font-size: clamp(28px, 5vw, 40px); font-weight: 300; line-height: 1.1; }
+  .canvas-title h2 em { font-style: italic; color: var(--accent); }
+
+  /* Canvas grid */
+  .canvas-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 14px; }
+
+  .canvas-block {
+    border: 1px solid var(--areia); border-radius: 2px; padding: 20px 22px;
+    position: relative; background: var(--creme);
+  }
+  .canvas-block::before {
+    content: ''; position: absolute; top: 0; left: 16px; right: 16px; height: 1.5px;
+  }
+
+  .canvas-block.transformacao::before { background: linear-gradient(90deg, var(--accent), transparent); }
+  .canvas-block.metodo::before { background: linear-gradient(90deg, var(--bark), transparent); }
+
+  .cb-label { font-size: 9px; font-weight: 500; letter-spacing: 0.16em; text-transform: uppercase; opacity: 0.45; margin-bottom: 6px; }
+  .cb-value { font-family: 'Cormorant Garamond', serif; font-size: 17px; font-weight: 400; line-height: 1.5; color: var(--bark); min-height: 24px; }
+  .cb-value.empty { font-style: italic; opacity: 0.3; font-size: 14px; }
+
+  /* Etapas canvas */
+  .canvas-etapas { margin-bottom: 14px; }
+  .canvas-etapas-label { font-size: 9px; font-weight: 500; letter-spacing: 0.16em; text-transform: uppercase; opacity: 0.45; margin-bottom: 12px; }
+
+  .canvas-etapas-flow {
+    display: flex; flex-wrap: wrap; align-items: center; gap: 8px;
+  }
+
+  .canvas-etapa-chip {
+    display: flex; align-items: center; gap: 8px;
+  }
+
+  .cec-num {
+    width: 22px; height: 22px; border-radius: 50%; background: var(--accent);
+    color: white; font-size: 10px; font-weight: 500;
+    display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+  }
+
+  .cec-body { }
+  .cec-nome { font-family: 'Cormorant Garamond', serif; font-size: 15px; font-weight: 500; color: var(--bark); line-height: 1.2; }
+  .cec-desc { font-size: 11px; font-weight: 300; opacity: 0.55; line-height: 1.4; margin-top: 1px; }
+
+  .cec-arrow { color: var(--areia-escura); font-size: 14px; opacity: 0.6; }
+
+  /* Promessa canvas — full width, destaque */
+  .canvas-promessa {
+    border: 1px solid var(--accent); border-radius: 2px;
+    padding: 22px 28px; background: var(--accent-light); text-align: center;
+    position: relative;
+  }
+  .canvas-promessa::before {
+    content: ''; position: absolute; top: 0; left: 50%; transform: translateX(-50%);
+    width: 48px; height: 2px; background: var(--accent);
+  }
+  .cp-label { font-size: 9px; font-weight: 500; letter-spacing: 0.2em; text-transform: uppercase; color: var(--accent); margin-bottom: 10px; opacity: 0.8; }
+  .cp-value { font-family: 'Cormorant Garamond', serif; font-size: clamp(17px, 2.8vw, 22px); font-weight: 400; font-style: italic; line-height: 1.6; color: var(--bark); min-height: 28px; }
+  .cp-value.empty { opacity: 0.3; font-size: 14px; }
+
+  /* Canvas footer */
+  .canvas-footer { display: flex; justify-content: space-between; align-items: center; margin-top: 20px; padding-top: 16px; border-top: 1px solid var(--areia); }
+  .cf-brand { font-family: 'Cormorant Garamond', serif; font-size: 13px; font-weight: 300; opacity: 0.35; font-style: italic; }
+  .cf-date { font-size: 10px; opacity: 0.3; letter-spacing: 0.06em; }
+
+  /* Canvas actions */
+  .canvas-actions { display: flex; flex-direction: column; align-items: center; gap: 12px; margin-top: 28px; }
+
+  .pdf-loading { display: none; align-items: center; gap: 8px; font-size: 12px; color: var(--accent); }
+  .pdf-loading.show { display: flex; }
+  .spinner { width: 14px; height: 14px; border: 2px solid var(--areia); border-top-color: var(--accent); border-radius: 50%; animation: spin 0.7s linear infinite; }
+
+  @keyframes fadeDown { from { opacity: 0; transform: translateY(-16px); } to { opacity: 1; transform: translateY(0); } }
+  @keyframes fadeUp   { from { opacity: 0; transform: translateY(16px);  } to { opacity: 1; transform: translateY(0); } }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  @media (max-width: 520px) {
+    .card { padding: 28px 22px 24px; } .card-num { font-size: 48px; top: 18px; right: 20px; }
+    .canvas-grid { grid-template-columns: 1fr; }
+    .canvas-wrap { padding: 28px 22px 24px; }
+    .canvas-etapas-flow { flex-direction: column; align-items: flex-start; }
+    .cec-arrow { display: none; }
+  }
+</style>
+</head>
+<body>
+<div class="page">
+
+  <div class="header">
+    <div class="eyebrow">6º Encontro · Semente</div>
+    <h1>Arquitetura<br><em>da Solução</em></h1>
+    <p class="header-sub">Você já conhece sua persona, mapeou o problema e construiu seu produto. Agora é hora de nomear o que nasceu — com clareza e intenção.</p>
+  </div>
+
+  <div class="progress-wrap">
+    <div class="progress-meta">
+      <span class="progress-label">Progresso</span>
+      <span class="progress-count" id="progressCount">1 <span>/ 4</span></span>
+    </div>
+    <div class="progress-bar"><div class="progress-fill" id="progressFill" style="width:25%"></div></div>
+  </div>
+
+  <!-- ── PARTE 1: Transformação ── -->
+  <div class="section active" id="sec0">
+    <div class="card">
+      <div class="card-num">01</div>
+      <div class="card-tag">Transformação</div>
+      <div class="card-title">Qual é a vida da sua persona depois de passar pelo seu processo?</div>
+      <div class="card-hint">Comece pelo fim. Antes de nomear qualquer etapa ou método, defina com precisão o destino — o que muda, o que ela passa a ter, ser ou sentir.</div>
+      <div class="field-label">Descreva a transformação</div>
+      <textarea id="transformacao" rows="5" placeholder="Ela sai do seu processo e... o que é diferente na vida dela? Como ela se sente, o que ela é capaz de fazer, o que ela tem que não tinha antes?"></textarea>
+      <div class="autosave" id="as_transformacao">✓ Salvo</div>
+    </div>
+    <div class="nav">
+      <div></div>
+      <button class="btn btn-primary" onclick="goTo(1)">Próxima parte <span class="arr-r arrow">→</span></button>
+    </div>
+  </div>
+
+  <!-- ── PARTE 2: Método ── -->
+  <div class="section" id="sec1">
+    <div class="card">
+      <div class="card-num">02</div>
+      <div class="card-tag">Método</div>
+      <div class="card-title">Como você nomeia o caminho que conduz até essa transformação?</div>
+      <div class="card-hint">O método é a sua assinatura. Pode ser um nome que você criou, uma sigla, uma metáfora — algo que torna o seu processo reconhecível e único.</div>
+      <div class="field-label">Nome do método</div>
+      <input type="text" id="metodo_nome" placeholder="Ex: Método Semente, Framework CLARA, Processo Âncora..." style="margin-bottom:16px;">
+      <div class="field-label">O que torna este método único?</div>
+      <textarea id="metodo_desc" rows="4" placeholder="Qual é a lógica por trás? O que o diferencia de outros processos no mercado? O que só você entrega desta forma?"></textarea>
+      <div class="autosave" id="as_metodo">✓ Salvo</div>
+    </div>
+    <div class="nav">
+      <button class="btn btn-ghost" onclick="goTo(0)"><span class="arr-l arrow">←</span> Voltar</button>
+      <button class="btn btn-primary" onclick="goTo(2)">Próxima parte <span class="arr-r arrow">→</span></button>
+    </div>
+  </div>
+
+  <!-- ── PARTE 3: Etapas ── -->
+  <div class="section" id="sec2">
+    <div class="card">
+      <div class="card-num">03</div>
+      <div class="card-tag">Etapas</div>
+      <div class="card-title">Quais são os passos do seu método?</div>
+      <div class="card-hint">Cada etapa é um movimento com nome e intenção. Pense nelas como capítulos — cada uma tem começo, meio e entrega clara para a persona.</div>
+
+      <div class="etapas-list" id="etapasList"></div>
+      <button class="btn-add" onclick="addEtapa()">+ Adicionar etapa</button>
+      <div class="autosave" id="as_etapas" style="margin-top:8px;">✓ Salvo</div>
+    </div>
+    <div class="nav">
+      <button class="btn btn-ghost" onclick="goTo(1)"><span class="arr-l arrow">←</span> Voltar</button>
+      <button class="btn btn-primary" onclick="goTo(3)">Próxima parte <span class="arr-r arrow">→</span></button>
+    </div>
+  </div>
+
+  <!-- ── PARTE 4: Promessa ── -->
+  <div class="section" id="sec3">
+    <div class="card">
+      <div class="card-num">04</div>
+      <div class="card-tag">Promessa</div>
+      <div class="card-title">Em uma frase: o que você garante para quem entra no seu processo?</div>
+      <div class="card-hint">A promessa é a síntese de tudo. Ela precisa ser específica o bastante para que a pessoa certa se reconheça — e ousada o bastante para que ela acredite que vale o investimento.</div>
+      <div class="field-label">Sua promessa</div>
+      <textarea id="promessa" rows="4" placeholder="Escreva como você diria para uma cliente: ao final deste processo, você vai..."></textarea>
+      <div class="autosave" id="as_promessa">✓ Salvo</div>
+    </div>
+    <div class="nav">
+      <button class="btn btn-ghost" onclick="goTo(2)"><span class="arr-l arrow">←</span> Voltar</button>
+      <button class="btn btn-dourado" onclick="buildCanvas(); goTo(4)">Ver canvas completo ✦</button>
+    </div>
+  </div>
+
+  <!-- ── CANVAS ── -->
+  <div class="section" id="sec4">
+
+    <div class="canvas-wrap" id="canvasEl">
+      <div class="canvas-title">
+        <div class="eyebrow-sm">Arquitetura da Solução · Semente</div>
+        <h2 id="canvasMetodoTitle">Seu <em>Método</em></h2>
+      </div>
+
+      <div class="canvas-grid">
+        <div class="canvas-block transformacao">
+          <div class="cb-label">Transformação</div>
+          <div class="cb-value" id="cvTransformacao"></div>
+        </div>
+        <div class="canvas-block metodo">
+          <div class="cb-label">O que torna único</div>
+          <div class="cb-value" id="cvMetodoDesc"></div>
+        </div>
+      </div>
+
+      <div class="canvas-etapas">
+        <div class="canvas-etapas-label">Etapas do método</div>
+        <div class="canvas-etapas-flow" id="cvEtapas"></div>
+      </div>
+
+      <div class="canvas-promessa">
+        <div class="cp-label">Promessa</div>
+        <div class="cp-value" id="cvPromessa"></div>
+      </div>
+
+      <div class="canvas-footer">
+        <div class="cf-brand">Semente — Transformação em Movimento</div>
+        <div class="cf-date" id="cvDate"></div>
+      </div>
+    </div>
+
+    <div class="canvas-actions">
+      <button class="btn btn-dourado" onclick="exportPDF()" id="btnExport">↓ Exportar PDF</button>
+      <div class="pdf-loading" id="pdfLoading"><div class="spinner"></div> Gerando PDF...</div>
+      <button class="btn btn-outline" onclick="goTo(0)">← Revisar respostas</button>
+    </div>
+
+  </div>
+
+</div><!-- /page -->
+
+<script>
+const KEY = 'semente-arquitetura';
+const STEPS = 4;
+let cur = 0;
+let etapas = [{ nome: '', desc: '' }];
+let saveTimer = null;
+
+// ── Load / Save ──────────────────────────────────────────────────────────────
+function load() {
+  try {
+    const d = JSON.parse(localStorage.getItem(KEY) || '{}');
+    if (d.transformacao) document.getElementById('transformacao').value = d.transformacao;
+    if (d.metodo_nome)   document.getElementById('metodo_nome').value   = d.metodo_nome;
+    if (d.metodo_desc)   document.getElementById('metodo_desc').value   = d.metodo_desc;
+    if (d.promessa)      document.getElementById('promessa').value      = d.promessa;
+    if (d.etapas)        etapas = d.etapas;
+    if (d.cur !== undefined) cur = d.cur;
+    renderEtapas();
+  } catch(e) {}
+}
+
+function save() {
+  const d = {
+    cur,
+    transformacao: document.getElementById('transformacao').value,
+    metodo_nome:   document.getElementById('metodo_nome').value,
+    metodo_desc:   document.getElementById('metodo_desc').value,
+    promessa:      document.getElementById('promessa').value,
+    etapas
+  };
+  localStorage.setItem(KEY, JSON.stringify(d));
+}
+
+function triggerAutosave(indicatorId) {
+  clearTimeout(saveTimer);
+  saveTimer = setTimeout(() => {
+    save();
+    const el = document.getElementById(indicatorId);
+    if (el) { el.classList.add('show'); setTimeout(() => el.classList.remove('show'), 1800); }
+  }, 700);
+}
+
+// Wire simple fields
+['transformacao','metodo_desc','promessa'].forEach(id => {
+  document.getElementById(id).addEventListener('input', () => triggerAutosave('as_' + id));
+});
+document.getElementById('metodo_nome').addEventListener('input', () => triggerAutosave('as_metodo'));
+
+// ── Etapas dinâmicas ─────────────────────────────────────────────────────────
+function renderEtapas() {
+  const list = document.getElementById('etapasList');
+  list.innerHTML = '';
+  etapas.forEach((et, i) => {
+    const div = document.createElement('div');
+    div.className = 'etapa-item';
+    div.innerHTML = `
+      <div class="etapa-header">
+        <div class="etapa-badge">${i + 1}</div>
+        <input class="etapa-nome input-field" type="text" placeholder="Nome da etapa..." value="${escHtml(et.nome)}" oninput="updateEtapa(${i},'nome',this.value)">
+        ${etapas.length > 1 ? `<button class="etapa-del" onclick="removeEtapa(${i})" title="Remover">×</button>` : ''}
+      </div>
+      <textarea class="etapa-desc" rows="2" placeholder="O que acontece nesta etapa? Qual é a entrega para a persona?" oninput="updateEtapa(${i},'desc',this.value)">${escHtml(et.desc)}</textarea>
+    `;
+    list.appendChild(div);
+  });
+}
+
+function escHtml(s) { return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+
+function updateEtapa(i, field, value) {
+  etapas[i][field] = value;
+  triggerAutosave('as_etapas');
+}
+
+function addEtapa() {
+  etapas.push({ nome: '', desc: '' });
+  renderEtapas();
+  save();
+  // Focus no novo campo
+  setTimeout(() => {
+    const items = document.querySelectorAll('.etapa-nome');
+    if (items.length) items[items.length-1].focus();
+  }, 50);
+}
+
+function removeEtapa(i) {
+  etapas.splice(i, 1);
+  renderEtapas();
+  save();
+}
+
+// ── Navigation ───────────────────────────────────────────────────────────────
+function goTo(n) {
+  save();
+  document.getElementById('sec' + cur).classList.remove('active');
+  cur = n;
+  document.getElementById('sec' + n).classList.add('active');
+  const pct = n >= STEPS ? 100 : ((n + 1) / STEPS * 100);
+  document.getElementById('progressFill').style.width = pct + '%';
+  document.getElementById('progressCount').innerHTML = `${Math.min(n+1, STEPS)} <span>/ ${STEPS}</span>`;
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+  save();
+}
+
+// ── Canvas builder ───────────────────────────────────────────────────────────
+function buildCanvas() {
+  const metNome       = document.getElementById('metodo_nome').value.trim();
+  const transformacao = document.getElementById('transformacao').value.trim();
+  const metDesc       = document.getElementById('metodo_desc').value.trim();
+  const promessa      = document.getElementById('promessa').value.trim();
+
+  // Title
+  const titleEl = document.getElementById('canvasMetodoTitle');
+  titleEl.innerHTML = metNome
+    ? escHtml(metNome).replace(/(\S+)(\s+)(\S.*)/, '$1<br><em>$3</em>')
+    : 'Sua <em>Solução</em>';
+
+  // Blocks
+  set('cvTransformacao', transformacao, 'A transformação que você gera...');
+  set('cvMetodoDesc', metDesc, 'O que torna este método único...');
+
+  // Etapas
+  const flow = document.getElementById('cvEtapas');
+  flow.innerHTML = '';
+  const filled = etapas.filter(e => e.nome.trim());
+  if (filled.length === 0) {
+    flow.innerHTML = '<span style="font-size:13px;opacity:0.3;font-style:italic;">As etapas aparecerão aqui...</span>';
+  } else {
+    filled.forEach((et, i) => {
+      const chip = document.createElement('div');
+      chip.className = 'canvas-etapa-chip';
+      chip.innerHTML = `
+        <div class="cec-num">${i+1}</div>
+        <div class="cec-body">
+          <div class="cec-nome">${escHtml(et.nome)}</div>
+          ${et.desc ? `<div class="cec-desc">${escHtml(et.desc.substring(0,60))}${et.desc.length>60?'…':''}</div>` : ''}
+        </div>
+      `;
+      flow.appendChild(chip);
+      if (i < filled.length - 1) {
+        const arr = document.createElement('div');
+        arr.className = 'cec-arrow';
+        arr.textContent = '→';
+        flow.appendChild(arr);
+      }
+    });
+  }
+
+  // Promessa
+  const cpEl = document.getElementById('cvPromessa');
+  if (promessa) { cpEl.textContent = promessa; cpEl.classList.remove('empty'); }
+  else { cpEl.textContent = 'A promessa do seu processo...'; cpEl.classList.add('empty'); }
+
+  // Date
+  document.getElementById('cvDate').textContent = new Date().toLocaleDateString('pt-BR', { day:'2-digit', month:'long', year:'numeric' }).toUpperCase();
+}
+
+function set(id, val, placeholder) {
+  const el = document.getElementById(id);
+  if (val) { el.textContent = val; el.classList.remove('empty'); }
+  else { el.textContent = placeholder; el.classList.add('empty'); }
+}
+
+// ── PDF Export ───────────────────────────────────────────────────────────────
+async function exportPDF() {
+  const btn = document.getElementById('btnExport');
+  const loading = document.getElementById('pdfLoading');
+  btn.style.display = 'none'; loading.classList.add('show');
+  await new Promise(r => setTimeout(r, 80));
+
+  try {
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF({ orientation: 'p', unit: 'mm', format: 'a4' });
+    const W = 210, mL = 22, mR = 22, cW = W - mL - mR;
+    let y = 0;
+
+    const C = {
+      creme:[245,240,232], bark:[61,46,30], dourado:[184,146,90],
+      areia:[221,208,188], areia2:[200,184,154], white:[255,255,255], verde:[90,122,90]
+    };
+
+    const sf = c => doc.setFillColor(c[0],c[1],c[2]);
+    const sd = c => doc.setDrawColor(c[0],c[1],c[2]);
+    const st = c => doc.setTextColor(c[0],c[1],c[2]);
+
+    const get = id => document.getElementById(id)?.value?.trim() || '';
+    const metNome = get('metodo_nome');
+
+    function newPage() { doc.addPage(); sf(C.creme); doc.rect(0,0,W,297,'F'); y = 24; }
+    function checkY(n=20) { if (y+n>272) newPage(); }
+
+    function drawSection(tag, title, content) {
+      const tLines = doc.splitTextToSize(title, cW-10);
+      const cLines = doc.splitTextToSize(content || 'Não respondida.', cW-14);
+      const hasVal = !!content;
+      const h = 8 + 6 + tLines.length*6 + cLines.length*5.5 + 16;
+      checkY(h+6);
+      sf(C.white); doc.roundedRect(mL,y,cW,h,1,1,'F');
+      sd(C.areia); doc.setLineWidth(0.3); doc.roundedRect(mL,y,cW,h,1,1,'S');
+      sf(C.dourado); doc.rect(mL,y,28,1.5,'F');
+      y += 8;
+      st(C.dourado); doc.setFontSize(7); doc.setFont('helvetica','normal');
+      doc.text(tag.toUpperCase(), mL+6, y); y += 6;
+      st(C.bark); doc.setFontSize(12); doc.setFont('helvetica','bold');
+      doc.text(tLines, mL+6, y); y += tLines.length*6 + 4;
+      sf([248,245,240]); doc.roundedRect(mL+6,y-2,cW-12,cLines.length*5.5+8,0.5,0.5,'F');
+      st(hasVal ? C.bark : C.areia); doc.setFontSize(10); doc.setFont('helvetica', hasVal?'normal':'italic');
+      if (!hasVal) doc.setGState(new doc.GState({opacity:0.5}));
+      doc.text(cLines, mL+10, y+4); doc.setGState(new doc.GState({opacity:1}));
+      y += cLines.length*5.5 + 14;
+    }
+
+    // ── Capa ──
+    sf(C.creme); doc.rect(0,0,W,297,'F');
+    sf(C.dourado); doc.rect(0,0,W,3,'F');
+    st(C.areia); doc.setFontSize(120); doc.setFont('helvetica','normal');
+    doc.text('6', W-22, 106, {align:'right'});
+    st(C.dourado); doc.setFontSize(9); doc.setFont('helvetica','normal');
+    doc.text('6º ENCONTRO · SEMENTE', mL, 54);
+    st(C.bark); doc.setFontSize(34); doc.setFont('helvetica','bold');
+    doc.text('Arquitetura da', mL, 72);
+    st(C.dourado); doc.setFontSize(34); doc.text('Solução', mL, 86);
+    if (metNome) {
+      st(C.bark); doc.setFontSize(13); doc.setFont('helvetica','italic');
+      doc.setGState(new doc.GState({opacity:0.6}));
+      doc.text(`Método: ${metNome}`, mL, 100);
+      doc.setGState(new doc.GState({opacity:1}));
+    }
+    sd(C.areia); doc.setLineWidth(0.4); doc.line(mL,112,W-mR,112);
+    const dateStr = new Date().toLocaleDateString('pt-BR',{day:'2-digit',month:'long',year:'numeric'});
+    st(C.bark); doc.setFontSize(9); doc.setGState(new doc.GState({opacity:0.4}));
+    doc.text(dateStr.toUpperCase(), mL, 122); doc.setGState(new doc.GState({opacity:1}));
+    sf(C.bark); doc.rect(0,274,W,23,'F');
+    st(C.creme); doc.setFontSize(8); doc.setGState(new doc.GState({opacity:0.55}));
+    doc.text('Semente — Transformação em Movimento', mL, 288); doc.setGState(new doc.GState({opacity:1}));
+
+    // ── Conteúdo ──
+    newPage();
+    drawSection('01 · Transformação', 'Qual é a vida da sua persona depois de passar pelo seu processo?', get('transformacao'));
+    drawSection('02 · Método', 'O que torna este método único?', [get('metodo_nome') ? `Nome: ${get('metodo_nome')}` : '', get('metodo_desc')].filter(Boolean).join('\n\n'));
+
+    // Etapas
+    const filledEtapas = etapas.filter(e => e.nome.trim());
+    if (filledEtapas.length > 0) {
+      const totalH = filledEtapas.reduce((acc, e) => {
+        const nL = doc.splitTextToSize(e.nome||'', cW-24).length;
+        const dL = e.desc ? doc.splitTextToSize(e.desc, cW-24).length : 0;
+        return acc + (nL*5.5) + (dL*5) + 14;
+      }, 28);
+      checkY(Math.min(totalH, 60)+12);
+
+      sf(C.white); const blockH = Math.max(totalH, 30);
+      doc.roundedRect(mL,y,cW,blockH,1,1,'F');
+      sd(C.areia); doc.setLineWidth(0.3); doc.roundedRect(mL,y,cW,blockH,1,1,'S');
+      sf(C.dourado); doc.rect(mL,y,28,1.5,'F');
+      y += 8;
+      st(C.dourado); doc.setFontSize(7); doc.setFont('helvetica','normal');
+      doc.text('03 · ETAPAS DO MÉTODO', mL+6, y); y += 8;
+
+      filledEtapas.forEach((et, i) => {
+        checkY(16);
+        // number circle
+        sf(C.dourado); doc.circle(mL+8, y+1, 4, 'F');
+        st(C.white); doc.setFontSize(7); doc.setFont('helvetica','bold');
+        doc.text(`${i+1}`, mL+8, y+2.5, {align:'center'});
+        // name
+        st(C.bark); doc.setFontSize(11); doc.setFont('helvetica','bold');
+        const nLines = doc.splitTextToSize(et.nome, cW-24);
+        doc.text(nLines, mL+16, y+2); y += nLines.length*5.5;
+        // desc
+        if (et.desc) {
+          const dLines = doc.splitTextToSize(et.desc, cW-20);
+          st(C.bark); doc.setFontSize(9); doc.setFont('helvetica','normal');
+          doc.setGState(new doc.GState({opacity:0.6}));
+          doc.text(dLines, mL+16, y); doc.setGState(new doc.GState({opacity:1}));
+          y += dLines.length*5 + 4;
+        }
+        // connector line (not last)
+        if (i < filledEtapas.length-1) {
+          sd(C.areia); doc.setLineWidth(0.5);
+          doc.line(mL+8, y, mL+8, y+6);
+          y += 8;
+        }
+      });
+      y += 14;
+    }
+
+    // Promessa — destaque
+    const promessa = get('promessa');
+    const pLines = doc.splitTextToSize(promessa || 'Não respondida.', cW-20);
+    const pH = pLines.length*6 + 24;
+    checkY(pH+8);
+    sf(C.dourado); doc.setGState(new doc.GState({opacity:0.12}));
+    doc.roundedRect(mL,y,cW,pH,1,1,'F'); doc.setGState(new doc.GState({opacity:1}));
+    sd(C.dourado); doc.setLineWidth(0.5); doc.roundedRect(mL,y,cW,pH,1,1,'S');
+    sf(C.dourado); doc.rect(W/2-20,y,40,1.5,'F');
+    st(C.dourado); doc.setFontSize(7); doc.setFont('helvetica','normal');
+    doc.text('04 · PROMESSA', W/2, y+8, {align:'center'});
+    const hasP = !!promessa;
+    st(hasP ? C.bark : C.areia); doc.setFontSize(12); doc.setFont('helvetica','italic');
+    if (!hasP) doc.setGState(new doc.GState({opacity:0.5}));
+    doc.text(pLines, W/2, y+16, {align:'center'});
+    doc.setGState(new doc.GState({opacity:1}));
+    y += pH+14;
+
+    // Page numbers
+    const total = doc.internal.getNumberOfPages();
+    for (let p=1; p<=total; p++) {
+      doc.setPage(p); if (p===1) continue;
+      st(C.bark); doc.setFontSize(8); doc.setGState(new doc.GState({opacity:0.3}));
+      doc.text(`${p-1}`, W/2, 290, {align:'center'}); doc.setGState(new doc.GState({opacity:1}));
+    }
+
+    doc.save('semente-arquitetura.pdf');
+  } catch(e) { console.error(e); alert('Erro ao gerar PDF.'); }
+
+  btn.style.display = 'inline-flex'; loading.classList.remove('show');
+}
+
+// ── Init ─────────────────────────────────────────────────────────────────────
+load();
+goTo(cur);
+</script>
+</body>
+</html>
