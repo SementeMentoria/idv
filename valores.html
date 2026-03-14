@@ -1,0 +1,768 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mapeamento de Valores — Semente</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;1,300;1,400&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --creme: #F5F0E8;
+    --bark: #3D2E1E;
+    --dourado: #B8925A;
+    --rose: #C9897A;
+    --verde: #5A7A5A;
+    --areia: #DDD0BC;
+    --areia-escura: #C8B89A;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--creme);
+    color: var(--bark);
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E");
+    pointer-events: none;
+    z-index: 0;
+    opacity: 0.4;
+  }
+
+  .container {
+    max-width: 720px;
+    margin: 0 auto;
+    padding: 48px 24px 120px;
+    position: relative;
+    z-index: 1;
+  }
+
+  /* Header */
+  .header {
+    text-align: center;
+    margin-bottom: 40px;
+    animation: fadeDown 0.8s ease both;
+  }
+
+  .header-eyebrow {
+    font-size: 11px;
+    font-weight: 500;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--rose);
+    margin-bottom: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+  }
+
+  .header-eyebrow::before,
+  .header-eyebrow::after {
+    content: '';
+    width: 32px;
+    height: 1px;
+    background: var(--rose);
+    opacity: 0.5;
+  }
+
+  .header h1 {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 36px;
+    font-weight: 300;
+    color: var(--bark);
+    line-height: 1.2;
+    margin-bottom: 16px;
+  }
+
+  .header p {
+    font-size: 15px;
+    color: var(--areia-escura);
+    line-height: 1.7;
+    max-width: 480px;
+    margin: 0 auto;
+  }
+
+  /* Pips */
+  .pips-wrap {
+    display: flex;
+    justify-content: center;
+    gap: 8px;
+    margin-bottom: 40px;
+    animation: fadeUp 0.6s ease 0.2s both;
+  }
+
+  .step-pip {
+    width: 28px;
+    height: 4px;
+    border-radius: 2px;
+    background: var(--areia);
+    transition: background 0.3s;
+  }
+
+  .step-pip.active { background: var(--rose); }
+  .step-pip.done { background: var(--areia-escura); }
+
+  /* Stage header */
+  .stage-header {
+    margin-bottom: 28px;
+    animation: fadeDown 0.6s ease both;
+  }
+
+  .stage-label {
+    font-size: 11px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--rose);
+    margin-bottom: 10px;
+  }
+
+  .stage-title {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 28px;
+    font-weight: 300;
+    color: var(--bark);
+    line-height: 1.3;
+    margin-bottom: 12px;
+  }
+
+  .stage-desc {
+    font-size: 14px;
+    color: var(--areia-escura);
+    line-height: 1.7;
+    max-width: 560px;
+  }
+
+  .counter-line {
+    margin-top: 12px;
+    font-size: 13px;
+    color: var(--areia-escura);
+  }
+
+  .counter-line strong { color: var(--rose); }
+
+  /* Grade de valores */
+  .values-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 24px;
+    animation: fadeUp 0.5s ease 0.1s both;
+  }
+
+  .value-chip {
+    padding: 8px 16px;
+    border-radius: 100px;
+    border: 1.5px solid var(--areia);
+    background: white;
+    color: var(--bark);
+    font-size: 13px;
+    font-family: 'DM Sans', sans-serif;
+    cursor: pointer;
+    transition: all 0.15s;
+    user-select: none;
+    font-weight: 400;
+  }
+
+  .value-chip:hover {
+    border-color: var(--rose);
+    color: var(--rose);
+    background: #FEF5F3;
+  }
+
+  .value-chip.selected {
+    background: var(--rose);
+    border-color: var(--rose);
+    color: white;
+    font-weight: 500;
+  }
+
+  /* Etapa 3 e 4 — chips maiores */
+  .values-grid.phase3 .value-chip,
+  .values-grid.phase4 .value-chip {
+    font-size: 14px;
+    padding: 10px 20px;
+  }
+
+  /* Resultado */
+  #result-screen { display: none; animation: fadeUp 0.7s ease both; }
+
+  .result-hero {
+    text-align: center;
+    margin-bottom: 40px;
+  }
+
+  .result-icon {
+    font-size: 28px;
+    color: var(--rose);
+    margin-bottom: 16px;
+    display: block;
+  }
+
+  .result-title {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 38px;
+    font-weight: 300;
+    color: var(--bark);
+    margin-bottom: 10px;
+  }
+
+  .result-subtitle {
+    font-size: 14px;
+    color: var(--areia-escura);
+    line-height: 1.7;
+    max-width: 480px;
+    margin: 0 auto;
+  }
+
+  .divider {
+    height: 1px;
+    background: var(--areia);
+    margin: 32px 0;
+  }
+
+  .result-tier { margin-bottom: 8px; }
+
+  .result-tier-label {
+    font-size: 11px;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--areia-escura);
+    margin-bottom: 14px;
+  }
+
+  .result-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+
+  .result-chip {
+    padding: 10px 20px;
+    border-radius: 100px;
+    font-size: 14px;
+    font-family: 'DM Sans', sans-serif;
+    font-weight: 500;
+  }
+
+  .result-chip.tier1 {
+    background: var(--rose);
+    color: white;
+    font-size: 15px;
+    padding: 12px 22px;
+  }
+
+  .result-chip.tier2 {
+    background: #F5EBE8;
+    color: var(--rose);
+    border: 1.5px solid var(--rose);
+  }
+
+  .result-chip.tier3 {
+    background: white;
+    color: var(--bark);
+    border: 1.5px solid var(--areia);
+  }
+
+  .reflection-box {
+    background: white;
+    border: 1px solid var(--areia);
+    border-radius: 8px;
+    padding: 20px;
+    margin-bottom: 24px;
+  }
+
+  .reflection-box label {
+    font-size: 13px;
+    color: var(--areia-escura);
+    display: block;
+    margin-bottom: 10px;
+    letter-spacing: 0.02em;
+  }
+
+  .reflection-box textarea {
+    width: 100%;
+    border: none;
+    background: transparent;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 14px;
+    color: var(--bark);
+    resize: none;
+    outline: none;
+    line-height: 1.6;
+  }
+
+  /* Footer */
+  .footer-bar {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: white;
+    border-top: 1px solid var(--areia);
+    padding: 16px 24px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    z-index: 10;
+  }
+
+  .footer-info {
+    font-size: 13px;
+    color: var(--areia-escura);
+  }
+
+  .footer-info strong { color: var(--rose); }
+
+  .btn-main {
+    background: var(--bark);
+    color: var(--areia);
+    border: none;
+    border-radius: 100px;
+    padding: 12px 32px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+    letter-spacing: 0.02em;
+  }
+
+  .btn-main:hover:not(:disabled) {
+    background: var(--rose);
+    color: white;
+    transform: translateY(-1px);
+  }
+
+  .btn-main:disabled {
+    background: var(--areia);
+    color: var(--areia-escura);
+    cursor: not-allowed;
+    transform: none;
+  }
+
+  .btn-restart {
+    background: transparent;
+    border: 1.5px solid var(--bark);
+    color: var(--bark);
+    border-radius: 100px;
+    padding: 12px 32px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+
+  .btn-restart:hover {
+    background: var(--bark);
+    color: var(--areia);
+  }
+
+  .stage-transition { animation: fadeUp 0.5s ease both; }
+
+  @keyframes fadeDown {
+    from { opacity: 0; transform: translateY(-16px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(16px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  @media (max-width: 480px) {
+    .header h1 { font-size: 28px; }
+    .stage-title { font-size: 22px; }
+    .value-chip { font-size: 12px; padding: 7px 13px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="container">
+
+  <div class="header">
+    <div class="header-eyebrow">Encontro 2 · Semente</div>
+    <h1>Mapeamento<br>de Valores</h1>
+    <p>Uma jornada em 4 etapas para descobrir o que realmente move você — seus valores inegociáveis, aqueles que orientam cada escolha.</p>
+  </div>
+
+  <!-- Pips -->
+  <div class="pips-wrap" id="progress-pips">
+    <div class="step-pip active" id="pip-1"></div>
+    <div class="step-pip" id="pip-2"></div>
+    <div class="step-pip" id="pip-3"></div>
+    <div class="step-pip" id="pip-4"></div>
+  </div>
+
+  <!-- Área do quiz -->
+  <div id="quiz-area">
+
+    <!-- Etapa 1 -->
+    <div id="stage-1">
+      <div class="stage-header">
+        <div class="stage-label">Etapa 1 de 4 · Reconhecimento</div>
+        <h2 class="stage-title">Quais valores falam com você?</h2>
+        <p class="stage-desc">Leia com calma e marque todos os valores que ressoam com quem você é — sem pensar muito, confie no que sente.</p>
+        <p class="counter-line">Selecionados: <strong id="count-1">0</strong> valores</p>
+      </div>
+      <div class="values-grid" id="grid-1"></div>
+    </div>
+
+    <!-- Etapa 2 -->
+    <div id="stage-2" style="display:none">
+      <div class="stage-header">
+        <div class="stage-label">Etapa 2 de 4 · Curadoria</div>
+        <h2 class="stage-title">Agora, escolha os 10 valores que mais se destacam para você.</h2>
+        <p class="stage-desc">Imagine que você vai se mudar de casa — e de tudo que tem, <em>só pode levar 10 coisas</em>. Quais desses valores vão na mudança?</p>
+        <p class="counter-line">Selecionados: <strong id="count-2">0</strong> de 10</p>
+      </div>
+      <div class="values-grid" id="grid-2"></div>
+    </div>
+
+    <!-- Etapa 3 -->
+    <div id="stage-3" style="display:none">
+      <div class="stage-header">
+        <div class="stage-label">Etapa 3 de 4 · Inegociáveis</div>
+        <h2 class="stage-title">Você vai viajar para a Europa!</h2>
+        <p class="stage-desc">Depois de se mudar, veio uma viagem incrível — mas a mala é pequena e <em>só cabem 5 coisas</em>. Quais desses 10 valores você leva na bagagem?</p>
+        <p class="counter-line">Selecionados: <strong id="count-3">0</strong> de 5</p>
+      </div>
+      <div class="values-grid phase3" id="grid-3"></div>
+    </div>
+
+    <!-- Etapa 4 -->
+    <div id="stage-4" style="display:none">
+      <div class="stage-header">
+        <div class="stage-label">Etapa 4 de 4 · O que você não larga</div>
+        <h2 class="stage-title">O hotel pegou fogo!</h2>
+        <p class="stage-desc">Você está no hotel e ele pegou fogo — precisa sair correndo agora. Só dá para carregar <em>3 coisas</em>. O que você não larga de jeito nenhum?</p>
+        <p class="counter-line">Selecionados: <strong id="count-4">0</strong> de 3</p>
+      </div>
+      <div class="values-grid phase4" id="grid-4"></div>
+    </div>
+
+  </div>
+
+  <!-- Resultado -->
+  <div id="result-screen">
+    <div class="result-hero">
+      <span class="result-icon">✦</span>
+      <h2 class="result-title">Seus valores mapeados</h2>
+      <p class="result-subtitle">Este é o retrato do que move e orienta você. Guarde, releia, e deixe que esses valores guiem suas escolhas.</p>
+    </div>
+
+    <div class="result-tier">
+      <div class="result-tier-label">✦ Sua essência · os 3 principais</div>
+      <div class="result-chips" id="res-3"></div>
+    </div>
+
+    <div class="divider"></div>
+
+    <div class="result-tier">
+      <div class="result-tier-label">Seus inegociáveis · os 5</div>
+      <div class="result-chips" id="res-5"></div>
+    </div>
+
+    <div class="divider"></div>
+
+    <div class="result-tier">
+      <div class="result-tier-label">Seus valores escolhidos · os 10</div>
+      <div class="result-chips" id="res-10"></div>
+    </div>
+
+    <div class="divider"></div>
+
+    <div class="reflection-box">
+      <label>Uma palavra ou frase que resume o que você descobriu hoje</label>
+      <textarea placeholder="Escreva aqui sua reflexão..." rows="3"></textarea>
+    </div>
+
+    <div style="text-align:center;padding-bottom:20px;">
+      <button class="btn-restart" onclick="restart()">Recomeçar do início</button>
+    </div>
+  </div>
+
+</div>
+
+<!-- Footer -->
+<div class="footer-bar" id="footer-bar">
+  <span class="footer-info" id="footer-info"></span>
+  <button class="btn-main" id="btn-next" onclick="nextStage()" disabled>Continuar →</button>
+</div>
+
+<script>
+const ALL_VALUES = [
+  "Abundância","Aceitação","Acessibilidade","Adaptabilidade","Adoração","Afeição",
+  "Agilidade","Agressividade","Alegria","Altruísmo","Ambição","Amizade","Antecipação",
+  "Apoio","Aprendizagem","Assertividade","Astuto","Atenção","Atratividade","Audácia","Autoconfiança",
+  "Autocontrole","Aventura","Beleza","Benevolência","Bondade","Bravura","Brilho","Calma","Capacidade",
+  "Caridade","Celebridade","Chefia","Clareza","Compaixão","Compartilhamento","Compostura","Compreensão",
+  "Compromisso","Concentração","Conexão","Confiança","Conformidade","Conforto","Congruência",
+  "Conhecimento","Consciência","Contentamento","Continuidade","Contribuição","Controle","Conveniência",
+  "Convicção","Cooperação","Coragem","Cordialidade","Cortesia","Credibilidade","Crescimento",
+  "Criatividade","Cuidado","Curiosidade","Desafio","Descoberta","Desejo","Desenvoltura","Destreza",
+  "Determinação","Dever","Devoção","Dignidade","Diligência","Dinamismo","Direção","Disciplina",
+  "Discrição","Disponibilidade","Distância","Diversão","Diversidade","Doação","Domínio","Economia",
+  "Educação","Eficácia","Eficiência","Elegância","Empatia","Encanto","Encorajamento","Energia",
+  "Engenho","Entusiasmo","Equilíbrio","Esperança","Espiritualidade","Espontaneidade","Estabilidade",
+  "Estrutura","Exatidão","Excelência","Excitação","Exclusividade","Expectativa","Experiência",
+  "Exploração","Expressividade","Êxtase","Extravagância","Extroversão","Exuberância","Fama","Família",
+  "Fascinação","Fé","Felicidade","Fidelidade","Filantropia","Financeiro","Firmeza","Flexibilidade",
+  "Fluência","Foco","Força","Franqueza","Frieza","Garantia","Generosidade","Graça","Gratidão",
+  "Harmonia","Heroísmo","Higiene","Honestidade","Honra","Hospitalidade","Humildade","Humor",
+  "Imaginação","Impacto","Imparcialidade","Independência","Inspiração","Integridade","Inteligência",
+  "Intensidade","Intimidade","Introversão","Intuição","Invenção","Investigação",
+  "Justiça","Lealdade","Libertação","Limitação","Limpeza","Lógica","Longevidade","Maturidade",
+  "Meticulosidade","Mistério","Modéstia","Motivação","Nobreza","Obediência","Oportunidade","Ordem",
+  "Organização","Orientação","Originalidade","Otimismo","Ousadia","Paixão","Paz","Perfeição",
+  "Perseverança","Persistência","Persuasão","Pertencer","Piedade","Poder","Pontualidade","Popularidade",
+  "Potência","Pragmatismo","Praticidade","Prazer","Precisão","Presença","Prevenção","Privacidade",
+  "Proatividade","Profissionalismo","Profundidade","Prontidão","Prosperidade","Proximidade","Prudência",
+  "Pureza","Razão","Realismo","Realização","Reconhecimento","Recreação","Reflexão","Relacionamento",
+  "Relaxamento","Religiosidade","Resiliência","Resistência","Resolução","Respeito","Reverência",
+  "Rigor","Riqueza","Sacrifício","Santidade","Satisfação","Saúde","Segurança","Sensibilidade",
+  "Sensualidade","Serenidade","Sexualidade","Significado","Silêncio","Simpatia","Simplicidade",
+  "Sinceridade","Sinergia","Sociabilidade","Solidão","Solidariedade","Suavidade","Sucesso","Surpresa",
+  "Tranquilidade","Unidade","Utilidade","Valorização","Velocidade","Verdade","Vivacidade"
+];
+
+let stage = 1;
+let selected1 = new Set();
+let selected2 = new Set();
+let selected3 = new Set();
+let selected4 = new Set();
+
+function buildGrid1() {
+  const grid = document.getElementById('grid-1');
+  ALL_VALUES.forEach(v => {
+    const chip = document.createElement('div');
+    chip.className = 'value-chip' + (selected1.has(v) ? ' selected' : '');
+    chip.textContent = v;
+    chip.onclick = () => {
+      if (chip.classList.contains('selected')) {
+        chip.classList.remove('selected');
+        selected1.delete(v);
+      } else {
+        chip.classList.add('selected');
+        selected1.add(v);
+      }
+      document.getElementById('count-1').textContent = selected1.size;
+      updateFooter();
+    };
+    grid.appendChild(chip);
+  });
+}
+
+function buildGrid2() {
+  const grid = document.getElementById('grid-2');
+  grid.innerHTML = '';
+  [...selected1].forEach(v => {
+    const chip = document.createElement('div');
+    chip.className = 'value-chip' + (selected2.has(v) ? ' selected' : '');
+    chip.textContent = v;
+    chip.onclick = () => {
+      if (chip.classList.contains('selected')) {
+        chip.classList.remove('selected');
+        selected2.delete(v);
+      } else {
+        if (selected2.size >= 10) return;
+        chip.classList.add('selected');
+        selected2.add(v);
+      }
+      document.getElementById('count-2').textContent = selected2.size;
+      updateFooter();
+    };
+    grid.appendChild(chip);
+  });
+}
+
+function buildGrid3() {
+  const grid = document.getElementById('grid-3');
+  grid.innerHTML = '';
+  [...selected2].forEach(v => {
+    const chip = document.createElement('div');
+    chip.className = 'value-chip' + (selected3.has(v) ? ' selected' : '');
+    chip.textContent = v;
+    chip.onclick = () => {
+      if (chip.classList.contains('selected')) {
+        chip.classList.remove('selected');
+        selected3.delete(v);
+      } else {
+        if (selected3.size >= 5) return;
+        chip.classList.add('selected');
+        selected3.add(v);
+      }
+      document.getElementById('count-3').textContent = selected3.size;
+      updateFooter();
+    };
+    grid.appendChild(chip);
+  });
+}
+
+function buildGrid4() {
+  const grid = document.getElementById('grid-4');
+  grid.innerHTML = '';
+  [...selected3].forEach(v => {
+    const chip = document.createElement('div');
+    chip.className = 'value-chip' + (selected4.has(v) ? ' selected' : '');
+    chip.textContent = v;
+    chip.onclick = () => {
+      if (chip.classList.contains('selected')) {
+        chip.classList.remove('selected');
+        selected4.delete(v);
+      } else {
+        if (selected4.size >= 3) return;
+        chip.classList.add('selected');
+        selected4.add(v);
+      }
+      document.getElementById('count-4').textContent = selected4.size;
+      updateFooter();
+    };
+    grid.appendChild(chip);
+  });
+}
+
+function updateFooter() {
+  const btn = document.getElementById('btn-next');
+  const info = document.getElementById('footer-info');
+  if (stage === 1) {
+    const n = selected1.size;
+    if (n === 0) { info.innerHTML = 'Marque os valores que ressoam com você'; btn.disabled = true; }
+    else { info.innerHTML = `<strong>${n}</strong> valores marcados`; btn.disabled = false; }
+  } else if (stage === 2) {
+    const n = selected2.size;
+    if (n < 10) { info.innerHTML = `Escolha mais <strong>${10-n}</strong>`; btn.disabled = true; }
+    else { info.innerHTML = `Perfeito! 10 valores escolhidos`; btn.disabled = false; }
+  } else if (stage === 3) {
+    const n = selected3.size;
+    if (n < 5) { info.innerHTML = `Escolha mais <strong>${5-n}</strong>`; btn.disabled = true; }
+    else { info.innerHTML = `Ótimo! 5 inegociáveis definidos`; btn.disabled = false; }
+  } else if (stage === 4) {
+    const n = selected4.size;
+    if (n < 3) { info.innerHTML = `Escolha mais <strong>${3-n}</strong>`; btn.disabled = true; }
+    else { info.innerHTML = `Sua essência está definida`; btn.disabled = false; }
+  }
+}
+
+function updatePips() {
+  for (let i = 1; i <= 4; i++) {
+    const pip = document.getElementById(`pip-${i}`);
+    pip.className = 'step-pip';
+    if (i < stage) pip.classList.add('done');
+    else if (i === stage) pip.classList.add('active');
+  }
+}
+
+function nextStage() {
+  if (stage === 1) {
+    document.getElementById('stage-1').style.display = 'none';
+    buildGrid2();
+    document.getElementById('stage-2').style.display = 'block';
+    document.getElementById('stage-2').classList.add('stage-transition');
+    stage = 2;
+  } else if (stage === 2) {
+    document.getElementById('stage-2').style.display = 'none';
+    buildGrid3();
+    document.getElementById('stage-3').style.display = 'block';
+    document.getElementById('stage-3').classList.add('stage-transition');
+    stage = 3;
+  } else if (stage === 3) {
+    document.getElementById('stage-3').style.display = 'none';
+    buildGrid4();
+    document.getElementById('stage-4').style.display = 'block';
+    document.getElementById('stage-4').classList.add('stage-transition');
+    stage = 4;
+  } else if (stage === 4) {
+    showResult();
+  }
+  updatePips();
+  updateFooter();
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function showResult() {
+  document.getElementById('quiz-area').style.display = 'none';
+  document.getElementById('footer-bar').style.display = 'none';
+  document.getElementById('result-screen').style.display = 'block';
+
+  for (let i = 1; i <= 4; i++) document.getElementById(`pip-${i}`).className = 'step-pip done';
+
+  const res3 = document.getElementById('res-3');
+  const res5 = document.getElementById('res-5');
+  const res10 = document.getElementById('res-10');
+
+  // Os 3 principais
+  [...selected4].forEach(v => {
+    const c = document.createElement('div');
+    c.className = 'result-chip tier1';
+    c.textContent = v;
+    res3.appendChild(c);
+  });
+
+  // Os 5 (excluindo os 3)
+  [...selected3].filter(v => !selected4.has(v)).forEach(v => {
+    const c = document.createElement('div');
+    c.className = 'result-chip tier2';
+    c.textContent = v;
+    res5.appendChild(c);
+  });
+  [...selected4].forEach(v => {
+    const c = document.createElement('div');
+    c.className = 'result-chip tier2';
+    c.textContent = v + ' ✦';
+    res5.appendChild(c);
+  });
+
+  // Os 10 (excluindo os 5)
+  [...selected2].filter(v => !selected3.has(v)).forEach(v => {
+    const c = document.createElement('div');
+    c.className = 'result-chip tier3';
+    c.textContent = v;
+    res10.appendChild(c);
+  });
+  [...selected3].forEach(v => {
+    const c = document.createElement('div');
+    c.className = 'result-chip tier2';
+    c.style.fontSize = '13px';
+    c.textContent = selected4.has(v) ? v + ' ✦' : v;
+    res10.appendChild(c);
+  });
+
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function restart() {
+  selected1.clear(); selected2.clear(); selected3.clear(); selected4.clear();
+  stage = 1;
+  document.getElementById('result-screen').style.display = 'none';
+  document.getElementById('quiz-area').style.display = 'block';
+  document.getElementById('footer-bar').style.display = 'flex';
+  document.getElementById('stage-2').style.display = 'none';
+  document.getElementById('stage-3').style.display = 'none';
+  document.getElementById('stage-4').style.display = 'none';
+  document.getElementById('stage-1').style.display = 'block';
+  document.getElementById('count-1').textContent = '0';
+  document.querySelectorAll('#grid-1 .value-chip').forEach(c => c.classList.remove('selected'));
+  document.getElementById('res-3').innerHTML = '';
+  document.getElementById('res-5').innerHTML = '';
+  document.getElementById('res-10').innerHTML = '';
+  updatePips();
+  updateFooter();
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+// Init
+buildGrid1();
+updateFooter();
+</script>
+</body>
+</html>
