@@ -402,8 +402,8 @@ textarea::placeholder, input::placeholder { color: var(--bark-light); }
 // ── SENHA DE ACESSO ──
 // 👇 Troque aqui a senha para cada aluna
 // 👇 Adicione login e senha juntos — mesma posição = mesma aluna
-const LOGINS   = ['aluna01', 'bernardo.dallac@gmail.com'];
-const SENHAS   = ['semente*2026', 'A1b2*c3d4'];
+const LOGINS   = ['aluna01'];
+const SENHAS   = ['semente*2026'];
 const SENHA_KEY = 'semente_auth';
 
 // ── RATE LIMITER ──
@@ -475,9 +475,10 @@ function verificarSenha() {
     erro.textContent = 'Por favor, confirme que você não é um robô.';
     return;
   }
+
+  // Camada 3 — Login e senha
   const login = document.getElementById('login-input').value.trim();
   const senha = document.getElementById('senha-input').value.trim();
-  const erro  = document.getElementById('lock-error');
   const idx   = LOGINS.indexOf(login);
   if (idx !== -1 && SENHAS[idx] === senha) {
     registrarSucesso();
