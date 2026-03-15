@@ -341,15 +341,6 @@ textarea::placeholder, input::placeholder { color: var(--bark-light); }
     color: rgba(255,255,255,0.2); letter-spacing: 0.05em;
   }
 
-  #lock-screen .lock-btn:disabled,
-  #lock-screen .lock-btn.bloqueado {
-    opacity: 0.45;
-    cursor: not-allowed;
-    background: var(--bark-light);
-  }
-  #lock-screen .lock-btn:not(:disabled):not(.bloqueado):hover {
-    background: var(--gold-light);
-  }
   #lock-screen .lock-btn {
     background: var(--gold); color: var(--bark);
     border: none; border-radius: 100px;
@@ -388,11 +379,9 @@ textarea::placeholder, input::placeholder { color: var(--bark-light); }
     <div class="g-recaptcha"
       data-sitekey="6Ld5RossAAAAACvdXMz0YxkdC2ERDuoORZQdlSKG"
       data-theme="dark"
-      data-callback="onRecaptchaOK"
-      data-expired-callback="onRecaptchaExpired"
       style="transform:scale(0.88);transform-origin:0 0;margin-bottom:4px;">
     </div>
-    <button class="lock-btn" id="lock-btn" onclick="verificarSenha()" disabled>Entrar →</button>
+    <button class="lock-btn" id="lock-btn" onclick="verificarSenha()">Entrar →</button>
     <div class="lock-error" id="lock-error"></div>
   </div>
 </div>
@@ -417,8 +406,8 @@ textarea::placeholder, input::placeholder { color: var(--bark-light); }
 // ── SENHA DE ACESSO ──
 // 👇 Troque aqui a senha para cada aluna
 // 👇 Adicione login e senha juntos — mesma posição = mesma aluna
-const LOGINS   = ['aluna01' , 'darlene.marisilva@gmail.com', 'bernardo.dallac@gmail.com'];
-const SENHAS   = ['semente*2026' , 'semente*2026', 'A1b2*c3d4'];
+const LOGINS   = ['aluna01'];
+const SENHAS   = ['semente*2026'];
 const SENHA_KEY = 'semente_auth';
 
 // ── RATE LIMITER ──
@@ -474,16 +463,6 @@ function msgTentativasRestantes() {
   return '';
 }
 
-function onRecaptchaOK() {
-  const btn = document.getElementById('lock-btn');
-  btn.disabled = false;
-}
-
-function onRecaptchaExpired() {
-  const btn = document.getElementById('lock-btn');
-  btn.disabled = true;
-}
-
 function verificarSenha() {
   const erro = document.getElementById('lock-error');
 
@@ -520,7 +499,6 @@ function verificarSenha() {
     if (typeof grecaptcha !== 'undefined') {
       grecaptcha.reset();
     }
-    document.getElementById('lock-btn').disabled = true;
     ['login-input','senha-input'].forEach(id => {
       const el = document.getElementById(id);
       el.style.borderColor = 'rgba(201,137,122,0.6)';
