@@ -303,17 +303,12 @@ textarea::placeholder, input::placeholder { color: var(--bark-light); }
     letter-spacing: 0.12em; text-transform: uppercase;
     margin-bottom: 40px; text-align: center;
   }
-  #lock-screen .g-recaptcha {
-    display: flex;
-    justify-content: center;
-    margin: 4px 0;
-  }
   #lock-screen .lock-box {
     background: rgba(255,255,255,0.06);
     border: 1px solid rgba(255,255,255,0.12);
     border-radius: 16px;
     padding: 32px 36px;
-    width: 100%; max-width: 360px;
+    width: 100%; max-width: 380px;
     display: flex; flex-direction: column; gap: 16px;
   }
   #lock-screen label {
@@ -376,10 +371,11 @@ textarea::placeholder, input::placeholder { color: var(--bark-light); }
     <input type="password" id="senha-input" placeholder="••••••••"
       autocomplete="current-password"
       onkeydown="if(event.key==='Enter') verificarSenha()">
-    <div class="g-recaptcha"
-      data-sitekey="6Ld5RossAAAAACvdXMz0YxkdC2ERDuoORZQdlSKG"
-      data-theme="dark"
-      style="transform:scale(0.88);transform-origin:0 0;margin-bottom:4px;">
+    <div style="display:flex;justify-content:center;margin:4px 0;">
+      <div class="g-recaptcha"
+        data-sitekey="6Ld5RossAAAAACvdXMz0YxkdC2ERDuoORZQdlSKG"
+        data-theme="dark">
+      </div>
     </div>
     <button class="lock-btn" id="lock-btn" onclick="verificarSenha()">Entrar →</button>
     <div class="lock-error" id="lock-error"></div>
@@ -406,8 +402,8 @@ textarea::placeholder, input::placeholder { color: var(--bark-light); }
 // ── SENHA DE ACESSO ──
 // 👇 Troque aqui a senha para cada aluna
 // 👇 Adicione login e senha juntos — mesma posição = mesma aluna
-const LOGINS   = ['aluna01' , 'darlene.marisilva@gmail.com', 'bernardo.dallac@gmail.com'];
-const SENHAS   = ['semente*2026' , 'semente*2026', 'A1b2*c3d4'];
+const LOGINS   = ['aluna01'];
+const SENHAS   = ['semente*2026'];
 const SENHA_KEY = 'semente_auth';
 
 // ── RATE LIMITER ──
