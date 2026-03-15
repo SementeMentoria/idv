@@ -377,7 +377,7 @@ textarea::placeholder, input::placeholder { color: var(--bark-light); }
         data-theme="dark">
       </div>
     </div>
-    <button class="lock-btn" id="lock-btn" onclick="verificarSenha()">Entrar →</button>
+    <button class="lock-btn" id="lock-btn">Entrar →</button>
     <div class="lock-error" id="lock-error"></div>
   </div>
 </div>
@@ -503,6 +503,12 @@ function verificarSenha() {
     });
   }
 }
+
+// Bind do botão de login
+document.addEventListener('DOMContentLoaded', function() {
+  var btn = document.getElementById('lock-btn');
+  if (btn) btn.addEventListener('click', verificarSenha);
+});
 
 // Verificar se já autenticou nesta sessão
 (function() {
