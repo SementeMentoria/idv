@@ -233,7 +233,20 @@
     letter-spacing: 0.02em;
   }
 
-  .btn-main:hover:not(:disabled) {
+  .btn-back {
+    background: transparent;
+    color: var(--bark);
+    border: 1.5px solid var(--areia-escura);
+    border-radius: 100px;
+    padding: 11px 24px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 14px;
+    font-weight: 400;
+    cursor: pointer;
+    transition: all 0.2s;
+    letter-spacing: 0.02em;
+  }
+  .btn-back:hover { border-color: var(--bark); background: var(--creme); }btn-main:hover:not(:disabled) {
     background: var(--dourado);
     color: white;
     transform: translateY(-1px);
@@ -503,12 +516,6 @@
 
   <!-- ── INTRO ── -->
   <div id="intro-screen">
-    <div class="header">
-      <div class="header-eyebrow">Encontro 1 · Semente</div>
-      <h1>Inventário de Personalidade<br>Big Five</h1>
-      <p>120 afirmações que mapeiam seus 5 traços centrais de personalidade — uma bússola para o autoconhecimento, não um rótulo.</p>
-    </div>
-
     <div class="intro-card">
       <p><strong>Como responder:</strong> Para cada afirmação, escolha um número de 1 a 5 que reflita o quanto ela representa você.</p>
       <p>Responda com base em como você <em>realmente é</em>, não como gostaria de ser.</p>
@@ -524,6 +531,12 @@
     <div class="intro-card">
       <p><strong>120 afirmações</strong> organizadas em 30 blocos de 4 · Tempo estimado: 15–20 minutos</p>
       <p>Ao final, você receberá um mapeamento detalhado dos seus 5 traços e 30 facetas, com opção de baixar em PDF.</p>
+    </div>
+
+    <div class="header">
+      <div class="header-eyebrow">Encontro 1 · Semente</div>
+      <h1>Inventário de Personalidade<br>Big Five</h1>
+      <p>120 afirmações que mapeiam seus 5 traços centrais de personalidade — uma bússola para o autoconhecimento, não um rótulo.</p>
     </div>
 
     <div style="text-align:center;margin-top:32px;">
@@ -549,6 +562,7 @@
 
 <!-- Footer fixo -->
 <div class="footer-bar" id="footer-bar" style="display:none;">
+  <button class="btn-back" id="btn-back" onclick="prevGroup()" style="display:none;">← Voltar</button>
   <div class="footer-info" id="footer-info">Responda todas as afirmações do bloco</div>
   <button class="btn-main" id="btn-next" onclick="nextGroup()" disabled>Continuar →</button>
 </div>
@@ -675,8 +689,13 @@ function updateFooter() {
   const grupo = GRUPOS[currentGroup];
   const allAnswered = grupo.every(q => answers[q.id] !== undefined);
   const btn = document.getElementById('btn-next');
+  const btnBack = document.getElementById('btn-back');
   const info = document.getElementById('footer-info');
   const remaining = grupo.filter(q => answers[q.id] === undefined).length;
+
+  // mostrar/esconder botão voltar
+  btnBack.style.display = currentGroup > 0 ? 'inline-block' : 'none';
+
   if (allAnswered) {
     const isLast = currentGroup === GRUPOS.length - 1;
     btn.disabled = false;
@@ -685,6 +704,14 @@ function updateFooter() {
   } else {
     btn.disabled = true;
     info.innerHTML = `Faltam <strong>${remaining}</strong> resposta${remaining > 1 ? 's' : ''}`;
+  }
+}
+
+function prevGroup() {
+  if (currentGroup > 0) {
+    currentGroup--;
+    renderGroup();
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   }
 }
 
